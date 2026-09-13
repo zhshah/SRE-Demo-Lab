@@ -347,6 +347,15 @@
       <div class="lab-grid">
         <section class="lab-section"><h3>Scope &amp; cost controls</h3><dl id="lab-profile" class="profile"></dl></section>
         <section class="lab-section"><h3>Open the deployed lab</h3><div id="resource-links" class="resource-links"></div><div class="callout"><span data-icon="shield-check" aria-hidden="true"></span><p>The two store endpoints are HTTP demo sites, without production authentication. Use test data only.</p></div></section>
+        <section class="lab-section wide" aria-labelledby="lab-power-heading">
+          <h3 id="lab-power-heading">Stop &amp; start AKS</h3>
+          <div class="callout danger"><span data-icon="triangle-alert" aria-hidden="true"></span><p>Restore active demo faults before stopping. Both websites go offline while AKS is stopped. SRE Agent, disks, and other retained resources continue billing.</p></div>
+          <p>Allow 15-30 minutes between stopping and restarting. Starting resumes node compute charges; regional capacity can delay a restart. Start ahead of your demo.</p>
+          <div id="lab-power-status"></div>
+          <div id="lab-power-commands" class="lab-grid"></div>
+          <p>After starting, refresh AKS credentials, verify workloads and telemetry, and rediscover the website URLs. Starting does not restore scenario faults.</p>
+          <div class="source-links"><a href="REDEPLOY.md#resume-an-existing-lab">Resume and acceptance checks</a><a href="COSTS.md">Cost and shutdown guide</a></div>
+        </section>
         <section class="lab-section"><h3>Observability &amp; agent behavior</h3><p>Container Insights, Log Analytics, Application Insights, four one-minute log alert rules, and the Azure Monitor connector are configured. Grafana and managed Prometheus were omitted.</p><p>Allow several minutes for telemetry and alert evaluation. Not every scenario necessarily triggers a configured rule. Check Azure Monitor Alerts and the agent's Incidents separately; a runner report does not prove that either stage occurred.</p><p>The response plan routes matching high-priority Pet Store alerts to <code>incident-handler</code> in Review mode. <code>cluster-health-monitor</code> provides health checks. Review proposed write actions before approval.</p><p>Outlook authorization is optional for email delivery. GitHub source-code analysis and Microsoft Learn MCP are not configured.</p><div id="telemetry-commands"></div></section>
         <section class="lab-section"><h3>Presenter guardrails</h3><ul class="evidence-list"><li>Prepare, inject one fault, collect fresh evidence, investigate, restore, verify.</li><li>Keep the two node pools fixed. Pending Pods is intentionally unschedulable.</li><li>Run CPU stress briefly. Stop the scenario after collecting enough evidence.</li><li>Compare event times with this injection; old restart counts are not proof of a new fault.</li><li>A green pod does not prove that checkout, networking, or order processing works.</li><li>The runner uses the current kubectl context before validation. ResourceGroupName alone does not select the cluster.</li><li>Repo shortcuts such as break-oom and fix-all assume the dev-container shell setup; these runbooks use explicit PowerShell commands.</li></ul><h3>Costs while the lab exists</h3><p>VMs plus the SRE Agent baseline are approximately USD 493.48 per 730-hour month, before disks, networking, ACR, logs, alerts, and active agent usage. This is not a spending cap.</p><p>Stopping AKS does not stop SRE Agent or all retained-resource charges. Stop/start and full lab teardown instructions remain in the cost guide. Recovery below does not delete Azure infrastructure or MongoDB storage.</p><div class="source-links"><a href="COSTS.md">Cost and shutdown guide</a><a href="https://azure.microsoft.com/en-us/pricing/details/sre-agent/" target="_blank" rel="noopener noreferrer">SRE Agent pricing</a></div></section>
         <section class="lab-section wide"><h3>Full scenario recovery</h3><p>For this lab only: remove the four scenario-only deployments and the blocking NetworkPolicy, reapply the healthy baseline, and wait for recovery. Do not run concurrently with an intentional investigation.</p><div id="full-recovery"></div></section>
@@ -623,6 +632,9 @@
     }
     function kubectl(argumentsText) { return `kubectl --context ${ENV.cluster} ${argumentsText}`; }
     function scriptCommand(name, extra = "") { return `& '${ENV.repoPath}\\scripts\\${name}' -ResourceGroupName ${ENV.resourceGroup}${extra ? " " + extra : ""}`; }
+    function labPowerCommand(action, preview = false) {
+      return `& {\n  Set-Location -LiteralPath '${ENV.repoPath.replace(/'/g, "''")}' -ErrorAction Stop\n  .\\scripts\\set-lab-power.ps1 -Action ${action}${preview ? " -WhatIf" : ""}\n}`;
+    }
     function baselineCommand() { return kubectl(`apply -f '${ENV.repoPath}\\k8s\\base\\application.yaml'`); }
     function preparationCommands() {
       return `Set-Location '${ENV.repoPath}\\scripts'\naz account set --subscription ${ENV.subscriptionId}\nkubectl config use-context ${ENV.cluster}\n${kubectl("config view --minify -o jsonpath='{.clusters[0].cluster.server}'")}`;
@@ -1085,6 +1097,14 @@
       const groupPath = `/subscriptions/${ENV.subscriptionId}/resourceGroups/${ENV.resourceGroup}`;
       const links = [["SRE Agent", "sre-srelab / investigation and review", ENV.agentUrl], ["Storefront", ENV.storeUrl, ENV.storeUrl], ["Store administration", ENV.adminUrl, ENV.adminUrl], ["Resource group", ENV.resourceGroup, `https://portal.azure.com/#resource${groupPath}/overview`], ["AKS / Container Insights", "aks-srelab / current cluster and monitoring", `https://portal.azure.com/#resource${groupPath}/providers/Microsoft.ContainerService/managedClusters/aks-srelab/overview`], ["Log Analytics", "log-srelab / logs and Kubernetes inventory", `https://portal.azure.com/#resource${groupPath}/providers/Microsoft.OperationalInsights/workspaces/log-srelab/overview`]];
       for (const [label, detail, url] of links) { const link = element("a", "resource-link"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; const text = element("span"); text.append(element("strong", "", label), element("small", "", detail)); link.append(text, icon("arrow-up-right", 17)); document.getElementById("resource-links").append(link); }
+      document.getElementById("lab-power-status").append(codeBlock({ title: "Check AKS power status", code: labPowerCommand("Status"), caption: "Read-only cluster check. Requires Azure CLI sign-in; the helper targets this lab's subscription, resource group, and cluster." }));
+      const powerBlocks = [
+        { title: "Preview stopping AKS", code: labPowerCommand("Stop", true), caption: "Checks the target and reports the intended action without stopping AKS." },
+        { title: "Stop AKS", code: labPowerCommand("Stop"), caption: "Requests confirmation, stops both node pools, and checks for Stopped / Succeeded." },
+        { title: "Preview starting AKS", code: labPowerCommand("Start", true), caption: "Checks the target and reports the intended action without starting AKS." },
+        { title: "Start AKS", code: labPowerCommand("Start"), caption: "Requests confirmation and checks for Running / Succeeded. Complete the acceptance checks before presenting." }
+      ];
+      document.getElementById("lab-power-commands").replaceChildren(...powerBlocks.map(codeBlock));
       document.getElementById("telemetry-commands").append(codeBlock({ title: "Optional configuration and telemetry verification", code: `${scriptCommand("verify-sre-agent-configuration.ps1")}\n${scriptCommand("verify-telemetry.ps1", "-Attempts 1")}`, caption: "A failed one-attempt telemetry check may reflect ingestion delay. Inspect the output before treating the lab as ready." }));
       document.getElementById("full-recovery").append(codeBlock({ title: "PowerShell / recover only this demo namespace", code: fullRecoveryCommands() }));
     }

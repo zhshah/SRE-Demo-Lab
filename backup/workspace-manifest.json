@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "snapshotDate": "2026-09-13",
   "sourceWorkspaceFileCount": 84,
-  "notes": "Source hashes describe the original local archive; Git hashes describe published content. README and .gitignore include backup updates. Only appInsightsConnectionString.value is redacted. The backup guide and this manifest are additional files.",
+  "notes": "Source hashes describe the original local archive; Git hashes describe current published content, including reviewed updates. Only appInsightsConnectionString.value is redacted. The backup guide and this manifest are additional files.",
   "files": [
     {
       "sourceWorkspaceFile": "Repo URL.txt",
@@ -104,7 +104,7 @@
       "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/DEMO-CONSOLE.html",
       "sourceArchiveSha256": "299B11E5FCFC78A38EF9917D96EB0C153BCE59D75B95467DFA2831578F73B461",
       "repositoryFile": "docs/DEMO-CONSOLE.html",
-      "publishedGitBlob": "a755389f23a93e05ac79ec2254ccd344c6b24770"
+      "publishedGitBlob": "e2b52938ad1f12acadfe70bd145233c9f01321c5"
     },
     {
       "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/LAB-GUIDE.md",
