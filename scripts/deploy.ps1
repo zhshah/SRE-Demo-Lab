@@ -9,11 +9,17 @@
     It uses device code authentication by default for dev container support.
 
 .PARAMETER Location
-    Azure region for deployment. Must be an SRE Agent supported region.
+    Azure region for deployment. Default: swedencentral.
     Valid values: eastus2, swedencentral, australiaeast
 
 .PARAMETER WorkloadName
     Name prefix for resources. Default: srelab
+
+.PARAMETER ResourceGroupName
+    Resource group for the lab. Default: Az-SRE-Agent-Demo-MAT-RG
+
+.PARAMETER SubscriptionId
+    Explicit deployment subscription. Defaults to the approved Connectivity Hub lab subscription.
 
 .PARAMETER SkipRbac
     Skip RBAC role assignments (useful if subscription policies block them)
@@ -23,6 +29,9 @@
 
 .PARAMETER WhatIf
     Show what would be deployed without making changes
+
+.PARAMETER CheckPrerequisitesOnly
+    Test local PowerShell, Azure CLI, Bicep, kubectl, curl, Python and PyYAML without contacting Azure.
 
 .EXAMPLE
     .\deploy.ps1 -Location eastus2
@@ -39,11 +48,19 @@
 param(
     [Parameter()]
     [ValidateSet('eastus2', 'swedencentral', 'australiaeast')]
-    [string]$Location = 'eastus2',
+    [string]$Location = 'swedencentral',
 
     [Parameter()]
     [ValidateLength(3, 10)]
     [string]$WorkloadName = 'srelab',
+
+    [Parameter()]
+    [ValidatePattern('^[a-zA-Z0-9_.()-]{1,90}$')]
+    [string]$ResourceGroupName = 'Az-SRE-Agent-Demo-MAT-RG',
+
+    [Parameter()]
+    [ValidatePattern('^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$')]
+    [string]$SubscriptionId = 'b28cc86b-8f84-47e5-a38a-b814b44d047e',
 
     [Parameter()]
     [switch]$SkipRbac,
@@ -58,10 +75,57 @@ param(
     [switch]$WhatIf,
 
     [Parameter()]
+    [switch]$CheckPrerequisitesOnly,
+
+    [Parameter()]
     [switch]$Yes
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Test-DeploymentPrerequisites {
+    param([switch]$SkipSreAgent)
+
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        throw 'Run this script in PowerShell 7 (pwsh), not Windows PowerShell 5.1.'
+    }
+    foreach ($toolName in @('az', 'pwsh', 'kubectl')) {
+        if (-not (Get-Command $toolName -ErrorAction SilentlyContinue)) {
+            throw "Required tool '$toolName' is not on PATH. See docs/REDEPLOY.md."
+        }
+    }
+    $null = az version --output json --only-show-errors
+    if ($LASTEXITCODE -ne 0) { throw 'Azure CLI could not start. Repair the Azure CLI installation.' }
+    $null = az bicep version --only-show-errors 2>&1
+    if ($LASTEXITCODE -ne 0) { throw 'Bicep is unavailable. Run az bicep install, then retry.' }
+    $null = kubectl version --client --output=json 2>&1
+    if ($LASTEXITCODE -ne 0) { throw 'kubectl could not start. Repair kubectl before deploying.' }
+
+    if (-not $SkipSreAgent) {
+        if (-not (Get-Command curl -CommandType Application -ErrorAction SilentlyContinue)) {
+            throw 'The curl executable is required for SRE Agent configuration.'
+        }
+        $null = curl --version 2>&1
+        if ($LASTEXITCODE -ne 0) { throw 'curl could not start.' }
+        $pythonPath = $null
+        foreach ($pythonCandidate in @('python3', 'python', '/opt/az/bin/python3')) {
+            $pythonCommand = Get-Command $pythonCandidate -ErrorAction SilentlyContinue
+            if (-not $pythonCommand) { continue }
+            $null = & $pythonCommand.Source --version 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                $pythonPath = $pythonCommand.Source
+                break
+            }
+        }
+        if (-not $pythonPath) { throw 'No working Python runtime was found. Windows Store aliases do not count.' }
+        $null = & $pythonPath -c 'import yaml' 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "PyYAML is missing from '$pythonPath'. Install it with that interpreter before deploying; see docs/REDEPLOY.md."
+        }
+        Write-Host "Python and PyYAML verified: $pythonPath" -ForegroundColor Green
+    }
+    Write-Host 'Local deployment prerequisites passed.' -ForegroundColor Green
+}
 
 function Invoke-AzCliJson {
     [CmdletBinding()]
@@ -462,26 +526,8 @@ Write-Host @"
 
 # Verify prerequisites
 Write-Host "🔍 Checking prerequisites..." -ForegroundColor Yellow
-
-# Check Azure CLI
-try {
-    $azVersion = az version --output json | ConvertFrom-Json
-    Write-Host "  ✅ Azure CLI version: $($azVersion.'azure-cli')" -ForegroundColor Green
-}
-catch {
-    Write-Error "Azure CLI is not installed. Please install it from https://aka.ms/installazurecli"
-    exit 1
-}
-
-# Check Bicep
-try {
-    $bicepVersion = az bicep version 2>&1
-    Write-Host "  ✅ Bicep: $bicepVersion" -ForegroundColor Green
-}
-catch {
-    Write-Host "  ⚠️  Bicep not found, installing..." -ForegroundColor Yellow
-    az bicep install
-}
+Test-DeploymentPrerequisites -SkipSreAgent:$SkipSreAgent
+if ($CheckPrerequisitesOnly) { exit 0 }
 
 # Check login status
 Write-Host "`n🔐 Checking Azure authentication..." -ForegroundColor Yellow
@@ -492,6 +538,15 @@ if (-not $account) {
     Write-Host "  This method works well in dev containers and codespaces." -ForegroundColor Gray
     az login --use-device-code
     $account = az account show --output json | ConvertFrom-Json
+}
+
+az account set --subscription $SubscriptionId --only-show-errors
+if ($LASTEXITCODE -ne 0) {
+    throw "Cannot select subscription $SubscriptionId. Sign in to the correct tenant and retry."
+}
+$account = az account show --output json --only-show-errors | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or $account.id -ne $SubscriptionId) {
+    throw "Azure context does not match the requested subscription $SubscriptionId."
 }
 
 Write-Host "  ✅ Logged in as: $($account.user.name)" -ForegroundColor Green
@@ -507,6 +562,17 @@ Write-Host "  ✅ Subscription context is valid for ARM deployments" -Foreground
 
 Write-Host "  📋 Subscription: $($account.name) ($($account.id))" -ForegroundColor Green
 
+if (-not $WhatIf) {
+    Write-Host "Resources will be deployed to $($account.name) / $ResourceGroupName / $Location." -ForegroundColor Yellow
+    if (-not $Yes) {
+        $confirm = Read-Host 'Continue? (y/N)'
+        if ($confirm -notin @('y', 'Y')) {
+            Write-Host 'Deployment cancelled.'
+            exit 0
+        }
+    }
+}
+
 $deploySreAgent = -not $SkipSreAgent
 $sreAgentSkipReason = ''
 
@@ -515,16 +581,17 @@ if ($deploySreAgent) {
     $sreAgentProvider = Get-SreAgentProviderStatus
 
     if ($sreAgentProvider.RegistrationState -ne 'Registered') {
+        if ($WhatIf) {
+            throw 'Microsoft.App is not registered. Register it explicitly before running what-if; no registration was attempted.'
+        }
         Write-Host "  Microsoft.App provider is not registered. Attempting registration..." -ForegroundColor Yellow
         az provider register --namespace Microsoft.App --wait --only-show-errors | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'Microsoft.App provider registration failed.' }
         $sreAgentProvider = Get-SreAgentProviderStatus
     }
 
     if (-not $sreAgentProvider.HasAgentsResource -or -not $sreAgentProvider.SupportsPreviewApi) {
-        $deploySreAgent = $false
-        $sreAgentSkipReason = 'Microsoft.App/agents@2025-05-01-preview is not available for this subscription.'
-        Write-Host "  ⚠️  $sreAgentSkipReason" -ForegroundColor Yellow
-        Write-Host "      Continuing with core infrastructure deployment." -ForegroundColor Gray
+        throw 'Microsoft.App/agents@2025-05-01-preview is unavailable. Fix access before deploying. Use -SkipSreAgent only for an intentionally incomplete, core-only lab.'
     }
     else {
         $apiVersion = if ($sreAgentProvider.DefaultApiVersion) { $sreAgentProvider.DefaultApiVersion } else { '2025-05-01-preview' }
@@ -538,21 +605,7 @@ else {
 
 $deploySreAgentValue = if ($deploySreAgent) { 'true' } else { 'false' }
 
-# Confirm subscription
-Write-Host "`n⚠️  Resources will be deployed to subscription: $($account.name)" -ForegroundColor Yellow
-if (-not $Yes) {
-    $confirm = Read-Host "Continue? (y/N)"
-    if ($confirm -ne 'y' -and $confirm -ne 'Y') {
-        Write-Host "Deployment cancelled." -ForegroundColor Red
-        exit 0
-    }
-}
-else {
-    Write-Host "  ✅ Confirmation skipped (-Yes)" -ForegroundColor Gray
-}
-
 # Set variables
-$resourceGroupName = "rg-$WorkloadName-$Location"
 $deploymentName = "sre-demo-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 $bicepFile = Join-Path $PSScriptRoot "..\infra\bicep\main.bicep"
 $parametersFile = Join-Path $PSScriptRoot "..\infra\bicep\main.bicepparam"
@@ -576,7 +629,7 @@ if ($WhatIf) {
     $whatIfOutput = az deployment sub what-if `
         --location $Location `
         --template-file $bicepFile `
-        --parameters $parametersFile location=$Location workloadName=$WorkloadName deploySreAgent=$deploySreAgentValue `
+        --parameters $parametersFile location=$Location workloadName=$WorkloadName resourceGroupName=$ResourceGroupName deploySreAgent=$deploySreAgentValue `
         --name $deploymentName 2>&1 | Out-String
 
     if ($LASTEXITCODE -ne 0) {
@@ -604,7 +657,7 @@ try {
         "az deployment sub create",
         "--location $Location",
         "--template-file `"$bicepFile`"",
-        "--parameters `"$parametersFile`" location=$Location workloadName=$WorkloadName deploySreAgent=$deploySreAgentValue",
+        "--parameters `"$parametersFile`" location=$Location workloadName=$WorkloadName resourceGroupName=$ResourceGroupName deploySreAgent=$deploySreAgentValue",
         "--name $deploymentName",
         "--only-show-errors",
         "--output json"
@@ -651,11 +704,7 @@ try {
 
             $deletedKeyVaultConflict = Get-DeletedKeyVaultConflict -ResourceGroupName $resourceGroupName
             if ($deletedKeyVaultConflict) {
-                $resolved = Resolve-DeletedKeyVaultConflict -VaultName $deletedKeyVaultConflict.VaultName -Location $Location
-                if ($resolved) {
-                    Write-Host "`n🔁 Retrying deployment after Key Vault purge..." -ForegroundColor Yellow
-                    continue
-                }
+                throw "Key Vault '$($deletedKeyVaultConflict.VaultName)' conflicts with a soft-deleted vault. No vault was purged. Choose recovery or a different name before retrying."
             }
         }
 
@@ -723,12 +772,29 @@ catch {
     exit 1
 }
 
+Write-Host "`nTagging generated Application Insights alerts..." -ForegroundColor Yellow
+$generatedAlertIds = @(az resource list --resource-group $resourceGroupName `
+    --resource-type Microsoft.AlertsManagement/smartDetectorAlertRules --query '[].id' --output tsv)
+if ($LASTEXITCODE -ne 0) {
+    throw "Could not list generated Application Insights alerts."
+}
+foreach ($generatedAlertId in $generatedAlertIds) {
+    az tag update --resource-id $generatedAlertId --operation Merge --tags SecurityControl=Ignore --output none
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not tag generated alert: $generatedAlertId"
+    }
+}
+
 # Get AKS credentials
 Write-Host "`n🔑 Getting AKS credentials..." -ForegroundColor Yellow
 az aks get-credentials `
     --resource-group $resourceGroupName `
     --name $outputs.aksClusterName.value `
+    --context $outputs.aksClusterName.value `
     --overwrite-existing
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not retrieve AKS credentials. No application manifests were applied.'
+}
 
 Write-Host "  ✅ kubectl configured for cluster: $($outputs.aksClusterName.value)" -ForegroundColor Green
 
@@ -753,13 +819,14 @@ if (-not $SkipRbac) {
             Write-Host "  ✅ Auto-detected SRE Agent managed identity principal ID" -ForegroundColor Green
         }
         elseif ($deploySreAgent) {
-            Write-Host "  ⚠️  SRE Agent principal ID was not returned by the deployment. Agent-specific RBAC was skipped." -ForegroundColor Yellow
+            throw 'The SRE Agent managed identity principal ID is missing from deployment outputs. Agent permissions cannot be configured.'
         }
 
-        & $rbacScript @rbacParams
+        & pwsh -NoLogo -NoProfile -File $rbacScript @rbacParams
+        if ($LASTEXITCODE -ne 0) { throw 'RBAC configuration failed. Correct the permissions before continuing.' }
     }
     else {
-        Write-Host "  ⚠️  RBAC script not found, skipping..." -ForegroundColor Yellow
+        throw "RBAC script not found: $rbacScript"
     }
 }
 
@@ -768,14 +835,15 @@ Write-Host "`n📦 Deploying demo application to AKS..." -ForegroundColor Yellow
 $k8sPath = Join-Path $PSScriptRoot "..\k8s\base\application.yaml"
 
 if (Test-Path $k8sPath) {
-    kubectl apply -f $k8sPath
+    kubectl --context $outputs.aksClusterName.value apply -f $k8sPath
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to apply the demo application manifest: $k8sPath"
     }
     Write-Host "  ✅ Demo application manifest applied" -ForegroundColor Green
     
     Write-Host "`n⏳ Waiting for workloads to roll out..." -ForegroundColor Yellow
-    $deploymentNamesRaw = kubectl get deployment -n pets -o jsonpath='{.items[*].metadata.name}' 2>$null
+    $deploymentNamesRaw = kubectl --context $outputs.aksClusterName.value get deployment -n pets -o jsonpath='{.items[*].metadata.name}' 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Could not list application deployments in the target cluster.' }
     $deploymentNames = @()
     if ($deploymentNamesRaw) {
         $deploymentNames = $deploymentNamesRaw -split '\s+' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
@@ -785,7 +853,7 @@ if (Test-Path $k8sPath) {
     }
 
     foreach ($deploymentName in $deploymentNames) {
-        kubectl rollout status "deployment/$deploymentName" -n pets --timeout=300s 2>$null
+        kubectl --context $outputs.aksClusterName.value rollout status "deployment/$deploymentName" -n pets --timeout=300s 2>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Rollout failed or timed out for deployment/$deploymentName. Check: kubectl describe deployment/$deploymentName -n pets"
         }
@@ -797,7 +865,7 @@ if (Test-Path $k8sPath) {
     $waited = 0
     $storeUrl = $null
     while ($waited -lt $maxWait) {
-        $externalIp = kubectl get svc store-front -n pets -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
+        $externalIp = kubectl --context $outputs.aksClusterName.value get svc store-front -n pets -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
         if ($externalIp) {
             $storeUrl = "http://$externalIp"
             break
@@ -814,7 +882,7 @@ if (Test-Path $k8sPath) {
     }
 }
 else {
-    Write-Host "  ⚠️  Application manifest not found at: $k8sPath" -ForegroundColor Yellow
+    throw "Application manifest not found at: $k8sPath"
 }
 
 # Run validation
@@ -831,15 +899,20 @@ else {
     throw "Deployment validation script not found at $validateScript"
 }
 
-$grafanaScript = Join-Path $PSScriptRoot "configure-grafana.ps1"
-if (Test-Path $grafanaScript) {
-    & pwsh -NoLogo -NoProfile -File $grafanaScript -ResourceGroupName $resourceGroupName
-    if ($LASTEXITCODE -ne 0) {
-        throw "Grafana dashboard provisioning failed. Review the Grafana output above."
+if ($outputs.grafanaDashboardUrl.value) {
+    $grafanaScript = Join-Path $PSScriptRoot "configure-grafana.ps1"
+    if (Test-Path $grafanaScript) {
+        & pwsh -NoLogo -NoProfile -File $grafanaScript -ResourceGroupName $resourceGroupName
+        if ($LASTEXITCODE -ne 0) {
+            throw "Grafana dashboard provisioning failed. Review the Grafana output above."
+        }
+    }
+    else {
+        throw "Grafana configuration script not found at $grafanaScript"
     }
 }
 else {
-    throw "Grafana configuration script not found at $grafanaScript"
+    Write-Host "Managed Grafana is disabled; skipping dashboard provisioning." -ForegroundColor Gray
 }
 
 if ($sreAgentSkipReason -and -not $outputs.sreAgentId.value) {
@@ -884,7 +957,7 @@ if ($outputs.sreAgentId.value) {
         }
     }
     else {
-        Write-Host "  ⚠️  Configuration script not found. Run configure-sre-agent.ps1 manually." -ForegroundColor Yellow
+        throw "SRE Agent configuration script not found: $configureScript"
     }
 }
 
@@ -897,6 +970,14 @@ if (Test-Path $telemetryScript) {
 }
 else {
     throw "Telemetry verification script not found at $telemetryScript"
+}
+
+if ($outputs.sreAgentId.value -and $Location -eq 'swedencentral' -and $WorkloadName -eq 'srelab') {
+    $consoleScript = Join-Path $PSScriptRoot 'update-demo-console.ps1'
+    & pwsh -NoLogo -NoProfile -File $consoleScript -SubscriptionId $SubscriptionId -ResourceGroupName $resourceGroupName
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Lab deployment passed verification, but the offline console refresh failed. Run scripts/update-demo-console.ps1; do not redeploy infrastructure just for this step.'
+    }
 }
 
 # Final instructions

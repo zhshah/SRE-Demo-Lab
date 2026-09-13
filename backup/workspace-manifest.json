@@ -1,0 +1,512 @@
+{
+  "schemaVersion": 1,
+  "snapshotDate": "2026-09-13",
+  "sourceWorkspaceFileCount": 84,
+  "notes": "Source hashes describe the original local archive; Git hashes describe published content. README and .gitignore include backup updates. Only appInsightsConnectionString.value is redacted. The backup guide and this manifest are additional files.",
+  "files": [
+    {
+      "sourceWorkspaceFile": "Repo URL.txt",
+      "sourceArchiveSha256": "F1A9F5B19578EE4038876E9D0549AC4BA1FA3F2BC2784D940503F1B37DB1F8B8",
+      "repositoryFile": "workspace-files/Repo URL.txt",
+      "publishedGitBlob": "35144b485cb525df84b7a9c66998276e151fea22"
+    },
+    {
+      "sourceWorkspaceFile": "sre-demo-oom-killed.md",
+      "sourceArchiveSha256": "838AB1A399B9F2E178A9596B85F0E2588A55FC1AC2BAC1F893C923E037A0AA2C",
+      "repositoryFile": "workspace-files/sre-demo-oom-killed.md",
+      "publishedGitBlob": "9cf3d4a920f6fe9a0d114c7fa54f97b745727bd3"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.gitattributes",
+      "sourceArchiveSha256": "BB7B9A3E5B428D955A10E728615D3803F98C769446F97710BA5DBC387B41A770",
+      "repositoryFile": ".gitattributes",
+      "publishedGitBlob": "9f2cb9aa04ab015c8416ee4b2352031dddfad1ad"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.gitignore",
+      "sourceArchiveSha256": "826CC779ECB538774C08DF455C4AAC7F34D361FF69964476EBC4637DE443E585",
+      "repositoryFile": ".gitignore",
+      "publishedGitBlob": "c7df0c182c0c4ebfbb4ab78ffcb5cdb7468eee57"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/LICENSE",
+      "sourceArchiveSha256": "EB86ECD72072A73F3632B5D71253439C850FB9CC4C35659F841CB2A56F273726",
+      "repositoryFile": "LICENSE",
+      "publishedGitBlob": "1add4bd4fb421a29909c6861d3959fc445485717"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/README.md",
+      "sourceArchiveSha256": "BC6216E56CE6F6ADBE83F3A41B3B9E1A12C3A87CC712F8B2EA5458084EA4DD20",
+      "repositoryFile": "README.md",
+      "publishedGitBlob": "57a536be7d70291a4309e20de1e254d36fd2672a"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.azure/deployment-plan.md",
+      "sourceArchiveSha256": "318DE54CBAE23182EB2D280B909F0C0782B2C40D2DAFC5A2A319BF0912A30413",
+      "repositoryFile": ".azure/deployment-plan.md",
+      "publishedGitBlob": "f9b228f2a4f79a6f85c17c8fc18340c53710cdf1"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.azure/validate-status.json",
+      "sourceArchiveSha256": "2C388D01D5515FC2E8C3053AC95A9D47D8B84EB39BCE14510DFF47B5302E6C8D",
+      "repositoryFile": ".azure/validate-status.json",
+      "publishedGitBlob": "a3fe4b0212ad5612b2e2ee05da930e9b9a12c934"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.devcontainer/devcontainer-lock.json",
+      "sourceArchiveSha256": "4A56D12C5DAA7AEC7C8EDB7D4BE43934B4EBA710EA38F1B8B06B5C4733475F2C",
+      "repositoryFile": ".devcontainer/devcontainer-lock.json",
+      "publishedGitBlob": "cf27da307e01b8b043c85dcd419a78edd706deff"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.devcontainer/devcontainer.json",
+      "sourceArchiveSha256": "7DBD1E043D71B2A8B2133329304BA633D56B15DA5155B5082A8AA28867338E6C",
+      "repositoryFile": ".devcontainer/devcontainer.json",
+      "publishedGitBlob": "f5ac470867ff9a542b58980c67405e5a4d769bde"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.devcontainer/post-create.sh",
+      "sourceArchiveSha256": "91273CCABE2DA32A4129C2F8A4D73E9D6667797B9C7C99843A4A1217491A391B",
+      "repositoryFile": ".devcontainer/post-create.sh",
+      "publishedGitBlob": "7bdb8da654f5d3e99bd7a2748491e5ee2cc6f521"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.devcontainer/post-start.sh",
+      "sourceArchiveSha256": "CB2BB195A0CD4416EB16377960F7CB975F4C1C57CE4825B2F1D456BDE8FE6F6D",
+      "repositoryFile": ".devcontainer/post-start.sh",
+      "publishedGitBlob": "f4c13c4b0885c41b7ae751f8de6597cec6e0c7d4"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.github/copilot-instructions.md",
+      "sourceArchiveSha256": "5A9620B74A2E64BEC50B876B1BE02E26CEF8DD901F26ABF2F109FE4A160FDEE1",
+      "repositoryFile": ".github/copilot-instructions.md",
+      "publishedGitBlob": "d164705e81008c0d7dcb307206b1b30a25e58373"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/.github/workflows/lab-rot-watch.yml",
+      "sourceArchiveSha256": "0507D9885DE8F6C2675A53012863C4CC62D0FF55A7A06A6407E4F84E66A3661B",
+      "repositoryFile": ".github/workflows/lab-rot-watch.yml",
+      "publishedGitBlob": "b4af2c4895e8483ed3ec32d1922d902a76010904"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/BREAKABLE-SCENARIOS.md",
+      "sourceArchiveSha256": "FA8827D6B3620FE814F4D69C19C4ED0377DA62E79A81C24D8D72842C79595B8B",
+      "repositoryFile": "docs/BREAKABLE-SCENARIOS.md",
+      "publishedGitBlob": "c7682b085ebb3ed601515e94e35f790213178cd8"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/COSTS.md",
+      "sourceArchiveSha256": "DBC37DDE854133446FB748811397BF152184897E173D03A2025204104F71DF47",
+      "repositoryFile": "docs/COSTS.md",
+      "publishedGitBlob": "fbfb849cda6dc599e3ac55ebf1963dc838099bf9"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/DEMO-CONSOLE.html",
+      "sourceArchiveSha256": "299B11E5FCFC78A38EF9917D96EB0C153BCE59D75B95467DFA2831578F73B461",
+      "repositoryFile": "docs/DEMO-CONSOLE.html",
+      "publishedGitBlob": "a755389f23a93e05ac79ec2254ccd344c6b24770"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/LAB-GUIDE.md",
+      "sourceArchiveSha256": "9697047813E74BFACA15185AFFD144C0AE6CD3EFFA40DFBBD58EB81D28070939",
+      "repositoryFile": "docs/LAB-GUIDE.md",
+      "publishedGitBlob": "4e0909eb19ca048dd4d26ef6a646c2cf9dd1b7fe"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/PROMPTS-GUIDE.md",
+      "sourceArchiveSha256": "A45E42D72F3F5E207B8B6EE981352A4D9F0E9EA72153CDB22DF0B949AA57AA48",
+      "repositoryFile": "docs/PROMPTS-GUIDE.md",
+      "publishedGitBlob": "18b20cea0afe1a1ae9d38a4c29afb66c937be8fa"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/REDEPLOY.md",
+      "sourceArchiveSha256": "B8EDECC642AE954E56E25F0EE7AA9879433EB2ACD5377305BB7BD4BACB7FCFA0",
+      "repositoryFile": "docs/REDEPLOY.md",
+      "publishedGitBlob": "e52e2804a9ba3c34a775faf18564dc6ca06d6e4b"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/SRE-AGENT-PROMPTS.md",
+      "sourceArchiveSha256": "7E6C7AE4F8A99D09CB198AE913F3B8657B5186F5A7A93B2BA12EF1208B5A2069",
+      "repositoryFile": "docs/SRE-AGENT-PROMPTS.md",
+      "publishedGitBlob": "8e66ab65ee95f5041e653de1f40df1d9e1ad2f06"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/docs/SRE-AGENT-SETUP.md",
+      "sourceArchiveSha256": "1C262418155C187AFA5BBE97D6DF7395114C1A838FDBAC3F7BC7ED9E691B8E84",
+      "repositoryFile": "docs/SRE-AGENT-SETUP.md",
+      "publishedGitBlob": "4ffedfb26990ba67c63cd6aaba95aa6f71237182"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/evidence/scenario-oom-killed-20260913-155848.json",
+      "sourceArchiveSha256": "CF587DE3ACFAB14910136593801A64270E4200C13C4DF66F1EAC0995C4453728",
+      "repositoryFile": "evidence/scenario-oom-killed-20260913-155848.json",
+      "publishedGitBlob": "c1261b2e2035203722ad2826891d3b07fb6af388"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/evidence/scenario-oom-killed-20260913-155848.md",
+      "sourceArchiveSha256": "BAB456334B82AAC2BB939EEF9885C5FCB371A8169A873D40C3DD6653AA9079A0",
+      "repositoryFile": "evidence/scenario-oom-killed-20260913-155848.md",
+      "publishedGitBlob": "bdf524c09c7dda0329ec96dbc56cfe72ec3dd5e1"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/main.bicep",
+      "sourceArchiveSha256": "77006B00F9FB595593582F91BA407939615E549ADB9748E2144C62489B8E84A4",
+      "repositoryFile": "infra/bicep/main.bicep",
+      "publishedGitBlob": "25db7e2bd3d78367bca06d9ffa1bc08f44fcb287"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/main.bicepparam",
+      "sourceArchiveSha256": "7F12AEC04CEBBAEB52A4CAEBD62354BCF47900D09300949DC980EADBA1D723BD",
+      "repositoryFile": "infra/bicep/main.bicepparam",
+      "publishedGitBlob": "da8c07672a91b64c009acb1624ab67f9ecd6e89b"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/main.json",
+      "sourceArchiveSha256": "385D544D73EC688D51F17EB7F1E27926DC3FA7FAB93BAB85F418CC1B7F39F98B",
+      "repositoryFile": "infra/bicep/main.json",
+      "publishedGitBlob": "c65cb55b1ae5c787dd3d5502dd4ee625338e51e4"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/action-group.bicep",
+      "sourceArchiveSha256": "9DE691AE54E3031F404010F1D1DCD7B7B0FDB6AFBEA02B9F8C078D0D19B9B4CE",
+      "repositoryFile": "infra/bicep/modules/action-group.bicep",
+      "publishedGitBlob": "0ba1d86112cc8d1bba7078ae7147efd91c6d3ff8"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/aks.bicep",
+      "sourceArchiveSha256": "C2F5781B29D0FD6082A295A8E34F96DCD094910537E626DC91E7EC614C50D166",
+      "repositoryFile": "infra/bicep/modules/aks.bicep",
+      "publishedGitBlob": "b2d66727f0f0fedd1315375075950de4c01e1140"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/alerts.bicep",
+      "sourceArchiveSha256": "4EA2B86A497508F3A063A5326F3AB37F40E2F5A76B077E15599FA0D084F30022",
+      "repositoryFile": "infra/bicep/modules/alerts.bicep",
+      "publishedGitBlob": "0b13a1c6864101619be78bf20c90c06694ed7d0c"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/app-insights.bicep",
+      "sourceArchiveSha256": "12489DCE5E1FDC5B40FEBCA520D6F7862C4E6075DBE76E09C58EA0EBC0E5D58E",
+      "repositoryFile": "infra/bicep/modules/app-insights.bicep",
+      "publishedGitBlob": "8e59471700a28180b10fb9247211fc6b82eba060"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/container-registry.bicep",
+      "sourceArchiveSha256": "AF184254F7B9570B47357D3A3D9C301FB05351C17A0D6C0371C236AA9FF93406",
+      "repositoryFile": "infra/bicep/modules/container-registry.bicep",
+      "publishedGitBlob": "a0163b0838fb89179fa83b00c5a80a728c21b6e7"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/key-vault.bicep",
+      "sourceArchiveSha256": "9671845580B2A27EF80A84881DC923EC470AAC1C1855DCEA010C1FECA7EF3A0B",
+      "repositoryFile": "infra/bicep/modules/key-vault.bicep",
+      "publishedGitBlob": "32e6001b767216528cc74ad23e4b53144f4ddc3b"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/log-analytics.bicep",
+      "sourceArchiveSha256": "ECF16533A43D22F2DFE52E9539AED9AB76C43AFE0BEAAC702E868CA78553B5BB",
+      "repositoryFile": "infra/bicep/modules/log-analytics.bicep",
+      "publishedGitBlob": "64301146459d01c0960df1a52de575b0e172a13d"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/network.bicep",
+      "sourceArchiveSha256": "AFAAF6C9381D8D0EAB2C5B499F5A518C69167BCA51B0654526D84B3896EE0AC1",
+      "repositoryFile": "infra/bicep/modules/network.bicep",
+      "publishedGitBlob": "3a5e50c27c6b1d66bf455f5bcd878c2ba3e5aef6"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/observability.bicep",
+      "sourceArchiveSha256": "7DECAA5F86390507B1A2CC0BF219057E10A4051760F8F28093CA805362F040A1",
+      "repositoryFile": "infra/bicep/modules/observability.bicep",
+      "publishedGitBlob": "cf65f3e33b1775fe64e0127c538d8dbaebddc364"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/infra/bicep/modules/sre-agent.bicep",
+      "sourceArchiveSha256": "01518E39F5DA10901AAE638AA3FE2F9346B9137B5589C94FD3AB3F0D44A83CD3",
+      "repositoryFile": "infra/bicep/modules/sre-agent.bicep",
+      "publishedGitBlob": "dc3963b3541c9f4ae6684f6791e3d005ae55e19a"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/base/application.yaml",
+      "sourceArchiveSha256": "70A5F28C2FAB24CCFA6C594A20C3348BD7225CBF33EC08CE05BBB34E9729B8DC",
+      "repositoryFile": "k8s/base/application.yaml",
+      "publishedGitBlob": "8adf465c4c186810519a366c0a96949fb3c8841c"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/crash-loop.yaml",
+      "sourceArchiveSha256": "1B2A93602EF3AB2E81D7095B99972AC8DE4470E2E755BAD585F4DF671CF70DB1",
+      "repositoryFile": "k8s/scenarios/crash-loop.yaml",
+      "publishedGitBlob": "eceb954b2f647f83a25f8fb6ab4b2a8bfe8f5469"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/high-cpu.yaml",
+      "sourceArchiveSha256": "1190684943F8C3470D5211B9E9314229A3C11D35B6EF3B64E5605B2E95A45203",
+      "repositoryFile": "k8s/scenarios/high-cpu.yaml",
+      "publishedGitBlob": "beec0fa04e545350a13379ec8fda0f20fcb321e3"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/image-pull-backoff.yaml",
+      "sourceArchiveSha256": "11AD39AB7C45F9CCA42BC6BFCB23835E62C95C471BB9718594CAE90AC4A1B8E6",
+      "repositoryFile": "k8s/scenarios/image-pull-backoff.yaml",
+      "publishedGitBlob": "11f26dd0b4972efad208ec7da3e66e59915a73ae"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/missing-config.yaml",
+      "sourceArchiveSha256": "32EED8C66F44540FC470A35D23424868938C2B21E6EB0C52294961E7C171FE6A",
+      "repositoryFile": "k8s/scenarios/missing-config.yaml",
+      "publishedGitBlob": "8fa90878a264b7bb3dec554fcdca6a79092883ec"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/mongodb-down.yaml",
+      "sourceArchiveSha256": "FAD832A9E2B1AF02D0957AD86B840582DC7163CF45CC4D259B4FDEC44354A878",
+      "repositoryFile": "k8s/scenarios/mongodb-down.yaml",
+      "publishedGitBlob": "2a59a2883874e9cc066b1e353b52c20a63b2b6be"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/network-block.yaml",
+      "sourceArchiveSha256": "76FFCF46BA3B152B0DD81981E4BAA3A6A7619A73CC0E2B87E72D26D69220773F",
+      "repositoryFile": "k8s/scenarios/network-block.yaml",
+      "publishedGitBlob": "04c63f496229fe0e36e4b359f26ab5312fc51227"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/oom-killed.yaml",
+      "sourceArchiveSha256": "E30207EC72D7E876D2EE401A6DF30A398BF9C278B1E0DB62316FD465BEE620A3",
+      "repositoryFile": "k8s/scenarios/oom-killed.yaml",
+      "publishedGitBlob": "3945ca3a884e9f5043d9639ea816a0cd92057a96"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/pending-pods.yaml",
+      "sourceArchiveSha256": "99B63E00D4B710E8C88E62EA2FAACE8C0A1D9B8DEBF2AEED29C36029DA1EC8F4",
+      "repositoryFile": "k8s/scenarios/pending-pods.yaml",
+      "publishedGitBlob": "d7f9de2f5aebf8c8557d4854754d515b0da32ba8"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/probe-failure.yaml",
+      "sourceArchiveSha256": "D6648F397AF0056621C554AD2752C9F6D3BADE2301A443A878903E6999FC502B",
+      "repositoryFile": "k8s/scenarios/probe-failure.yaml",
+      "publishedGitBlob": "208d2047e6796af091fadcfd6f1165027e1b5535"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/k8s/scenarios/service-mismatch.yaml",
+      "sourceArchiveSha256": "C99C23DD4B9AC4AFF48097C107122AAEFE945C827E4C4122382F6F1D2C0503BF",
+      "repositoryFile": "k8s/scenarios/service-mismatch.yaml",
+      "publishedGitBlob": "02ce75f0b7d4f48dd3b090b066c2ceb4036b1658"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/media/menu.png",
+      "sourceArchiveSha256": "9A6909DB1E417DEA415B33EA8920FB59D025DC41795BEDBED0502FC7F3A5EBCA",
+      "repositoryFile": "media/menu.png",
+      "publishedGitBlob": "b78c29c3ba6b99640cf12ae2690ec2859a4f1c69"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/configure-grafana.ps1",
+      "sourceArchiveSha256": "EA46A0C5E5482840D0E2AF538BA0EDBA0E5A137CB3FF3A8874B4FFB94845FF85",
+      "repositoryFile": "scripts/configure-grafana.ps1",
+      "publishedGitBlob": "9b93d13cce17558025691842327cc250a267b1c0"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/configure-rbac.ps1",
+      "sourceArchiveSha256": "4205D37AA53F36D98014F0B74A796BE3832198056B61C23BA7D72C69C052AAB5",
+      "repositoryFile": "scripts/configure-rbac.ps1",
+      "publishedGitBlob": "d376617afc188f469f74aaa59c85cc4ec1281ac4"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/configure-sre-agent-v2.ps1",
+      "sourceArchiveSha256": "8173A7409FEAFDA9CC443B16B47A22408ECB2BAEA8AAA1FCE10F12F4FEB6A2A9",
+      "repositoryFile": "scripts/configure-sre-agent-v2.ps1",
+      "publishedGitBlob": "368f8e6117715becffd141bf7f8b50c31ac5f1a4"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/configure-sre-agent.ps1",
+      "sourceArchiveSha256": "DA2A4FFCAC81F5DDB2454427A2FBAC8002DACD2CE814E98D99D40126EF3F0F41",
+      "repositoryFile": "scripts/configure-sre-agent.ps1",
+      "publishedGitBlob": "dac73ec55a3545f8c0eb3b58dbbcab87febe50c3"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/deploy.ps1",
+      "sourceArchiveSha256": "D2B7EA0CCD318E4931CD7F655533A4E9673CB2469A77B87BB7FC464D91E91121",
+      "repositoryFile": "scripts/deploy.ps1",
+      "publishedGitBlob": "0192826680ed94c65561fdfab973f24a68713fd9"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/deployment-outputs.json",
+      "sourceArchiveSha256": "03E03D612C79A608CAA9233A47991F011ACE25B5C5AF4A524878C776BC150E5D",
+      "repositoryFile": "backup/deployment-outputs.redacted.json",
+      "publishedGitBlob": "a0009fd2d5a556cc74c3e427d305d942263197f6"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/destroy.ps1",
+      "sourceArchiveSha256": "A622CCA2326A60EF82472204E5CD773D00554524C2D15E3C544E45731CE3DDBB",
+      "repositoryFile": "scripts/destroy.ps1",
+      "publishedGitBlob": "6bc55e957777040429bbc92c64637cd6022fc140"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/manage-azure-monitor-profile.ps1",
+      "sourceArchiveSha256": "3D253C4B367C50EAA4BC08F5C36C9D83B89D2AB1C466688E13AD2286D774E819",
+      "repositoryFile": "scripts/manage-azure-monitor-profile.ps1",
+      "publishedGitBlob": "9ed56558b7ff12724d5dcbf91b99f4e1a83a2a5e"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/probe-incident-filter-api.ps1",
+      "sourceArchiveSha256": "25AED5E37B5E5BF8D1129C933121E8742AF8B9D0063E172A8425708C1811A2C7",
+      "repositoryFile": "scripts/probe-incident-filter-api.ps1",
+      "publishedGitBlob": "9437321e1eae4807243c3bf84090f4dbe0f133f6"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/report-sre-agent-capabilities.ps1",
+      "sourceArchiveSha256": "3CEDCD9CC02EB7AD14A3C65C53150748F974591BFB4D41700E8CE36C49B3FE85",
+      "repositoryFile": "scripts/report-sre-agent-capabilities.ps1",
+      "publishedGitBlob": "75ddd9f7b148eb723f992549094bd154d3faea7d"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/run-demo-scenario.ps1",
+      "sourceArchiveSha256": "2D3E9EB270C7EA9FA4FA4344338797EE6F4A823F08E993960E73891EA328BF14",
+      "repositoryFile": "scripts/run-demo-scenario.ps1",
+      "publishedGitBlob": "30b1bcd953c9b0e6c07b9e30140d4ab10930068a"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/set-lab-power.ps1",
+      "sourceArchiveSha256": "9E88A95A1D7A494AF46A2B3350EFE47A88AAE493C4CED8CE16871D66DB20D00D",
+      "repositoryFile": "scripts/set-lab-power.ps1",
+      "publishedGitBlob": "8e11c24177ca30925651927810fa6dbd6cf29896"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/test-deployment-safety.ps1",
+      "sourceArchiveSha256": "D4274F7DC5061A02EF95C9AADA4D8F22B5361BB80671AC4E4671C8AF842ECAE6",
+      "repositoryFile": "scripts/test-deployment-safety.ps1",
+      "publishedGitBlob": "ee8b874b8c26b6bf9f963e6403662257d31a7106"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/update-demo-console.ps1",
+      "sourceArchiveSha256": "8D9624BAC3BC3DD3F985475D1E7FCD510D5D8267C8F413927ED63C59A3622301",
+      "repositoryFile": "scripts/update-demo-console.ps1",
+      "publishedGitBlob": "32357245e61cd7333f5700fa0b506025638b7454"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/validate-deployment.ps1",
+      "sourceArchiveSha256": "BE862308EAF54E9506B940F622EB115D8EF2D4C1E375E82C51A60F55226EF742",
+      "repositoryFile": "scripts/validate-deployment.ps1",
+      "publishedGitBlob": "7f7b1c6db625300dd61e5fb78a4a352cad5eb90f"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/validate-sre-agent-governance.py",
+      "sourceArchiveSha256": "AC73730B9A2E3BA8E7BCDD0224BC1A208853927BE86B2F466AAB3BA88B26E129",
+      "repositoryFile": "scripts/validate-sre-agent-governance.py",
+      "publishedGitBlob": "760a90dafeeea0b1df36015e43c7aa98d02f7f46"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/verify-sre-agent-configuration.ps1",
+      "sourceArchiveSha256": "371CE18F445DA5BCBFC5B0B72E3CCF328FE77CE1946C4FA348EE7956FACE18CC",
+      "repositoryFile": "scripts/verify-sre-agent-configuration.ps1",
+      "publishedGitBlob": "c83f0efbbc0ede838fdddb50623bf35461fee744"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/verify-telemetry.ps1",
+      "sourceArchiveSha256": "39DC5A51CA96D5D77E1DD2EF830A237A3911A20BFBC641140D0FA920FFC229EB",
+      "repositoryFile": "scripts/verify-telemetry.ps1",
+      "publishedGitBlob": "94bfdf5453dd5dadfdb3fc44b774c427540e4870"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/yaml-to-agent-json.py",
+      "sourceArchiveSha256": "1B160E14F7EEB545CC31C9339ACAAE552278E371EC6754E555BC21FE6E763900",
+      "repositoryFile": "scripts/yaml-to-agent-json.py",
+      "publishedGitBlob": "476c2b7bd901d9f26673dfd3e04566dabeabb670"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/scripts/yaml-to-api-json.py",
+      "sourceArchiveSha256": "89CEF7B3D57EFD4CC0BE3C116803ACF27E2A46E822BF7F367D5B9DD74700688E",
+      "repositoryFile": "scripts/yaml-to-api-json.py",
+      "publishedGitBlob": "66bd40ab26ff93e31f986d348e1af2f27b09ef61"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/agents/cluster-health-monitor.yaml",
+      "sourceArchiveSha256": "A805A636F3276B616B2B54922A78944206FC2C8807B580AE24E3FE40604D5D77",
+      "repositoryFile": "sre-config/agents/cluster-health-monitor.yaml",
+      "publishedGitBlob": "967d5edfb7cec27e6cb4ec4eb663b805618ecd5d"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/agents/code-analyzer.yaml",
+      "sourceArchiveSha256": "93FCF0A00C6F78DD8424B28A6D30FEB459F3083CDDCC5469275283C0D3FD323F",
+      "repositoryFile": "sre-config/agents/code-analyzer.yaml",
+      "publishedGitBlob": "77fa08616927ec97a0af2bb296175d07c94ccafa"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/agents/incident-handler-core.yaml",
+      "sourceArchiveSha256": "DBAD42FEEAB1D45D53620AEBFBBC34BEF9526A28A772DDC77FC8728440256CC2",
+      "repositoryFile": "sre-config/agents/incident-handler-core.yaml",
+      "publishedGitBlob": "fd9b412367b1f6174a325ec6b999504358dd464e"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/agents/incident-handler-full.yaml",
+      "sourceArchiveSha256": "8BFB44BBAE2000B6B39BA152F252D588D2FE83A5D0315BC0DB5009B27B7698D0",
+      "repositoryFile": "sre-config/agents/incident-handler-full.yaml",
+      "publishedGitBlob": "7e007ba25d2b7377d4968fcb3e59ff034e3523df"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/connectors/azure-monitor.yaml",
+      "sourceArchiveSha256": "8ECA42063B00F2F967E7D446AF32C0A302CDDA7B804EDFC4B463FD99594AFCA3",
+      "repositoryFile": "sre-config/connectors/azure-monitor.yaml",
+      "publishedGitBlob": "5e0dc3cfb2982bdf21f8e23f50044b896a9c6048"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/connectors/github-mcp.yaml",
+      "sourceArchiveSha256": "D38B8BB5B10A7C2F431D334CA74CD71533E7D9E899B4DA39E1228822E2695E07",
+      "repositoryFile": "sre-config/connectors/github-mcp.yaml",
+      "publishedGitBlob": "f013b6de6320e904c4137f8e95d7c9cfb58a03a3"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/connectors/microsoft-learn.yaml",
+      "sourceArchiveSha256": "0FB2C73AA1BB9A809DF08FB8AE0D532080C78A68FC8A922BE76B8C4260C1166F",
+      "repositoryFile": "sre-config/connectors/microsoft-learn.yaml",
+      "publishedGitBlob": "087b2b878c1931ed1970a55e71dfcc95ca2ced3c"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/connectors/outlook.yaml",
+      "sourceArchiveSha256": "67F41536F2595E2D9162CD0F3273ECA6684956F441DFB078F8A97DD16852A758",
+      "repositoryFile": "sre-config/connectors/outlook.yaml",
+      "publishedGitBlob": "eb4437328a14490c0cf5e065ad2566f204839e2a"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/governance/review-profile.yaml",
+      "sourceArchiveSha256": "DAB114C62EB1685B91D01FE7369AA4C632CFE2D14D1C51FEA65B6899BAE63A07",
+      "repositoryFile": "sre-config/governance/review-profile.yaml",
+      "publishedGitBlob": "4df00321be76a017aaa2172b807ef13384cdb3ce"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/aks-pod-failures.md",
+      "sourceArchiveSha256": "808D662AB347FB2C7939B5A98D55F9CE5EA91498A4FCCC5ECAB2AD4B982EADFA",
+      "repositoryFile": "sre-config/knowledge-base/aks-pod-failures.md",
+      "publishedGitBlob": "f242090f4617e7e0089fc19c9c44b1671b8aac1c"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/app-architecture.md",
+      "sourceArchiveSha256": "1B556F32CBE1F7E5BCBEE348EA8E3CC862720D85CFF1E86F0567F72FB456D34F",
+      "repositoryFile": "sre-config/knowledge-base/app-architecture.md",
+      "publishedGitBlob": "09a1d75c16b89f5cd40f23fef3648dbc93fae694"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/dependency-failures.md",
+      "sourceArchiveSha256": "F60603F8BB42CFE9DFEC1020DECC33C6BA4604363D9EA633C159AC6826ECFFF6",
+      "repositoryFile": "sre-config/knowledge-base/dependency-failures.md",
+      "publishedGitBlob": "a1fbb9f764e62f019b4b362627f0edb1e3f25278"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/incident-report-template.md",
+      "sourceArchiveSha256": "3A2B569C5C371397DF0D0449C07E2C226457F022B315FE531B4B7EEA8A2C71F6",
+      "repositoryFile": "sre-config/knowledge-base/incident-report-template.md",
+      "publishedGitBlob": "93782346022cb9e37a2384c20cc3af920b6e225a"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/network-connectivity.md",
+      "sourceArchiveSha256": "695C760C2640624A13248EC538078E4E052E8297E26D0382CA4A9BD54A803BDF",
+      "repositoryFile": "sre-config/knowledge-base/network-connectivity.md",
+      "publishedGitBlob": "543f6dd11055d94b8ec25ddb8c41623d42d3dda4"
+    },
+    {
+      "sourceWorkspaceFile": "azure-sre-agent-sandbox/sre-config/knowledge-base/resource-exhaustion.md",
+      "sourceArchiveSha256": "7528B3FEAD86209338360908976FFEAC8EEAD375E3FC11A69B32200805CE43EA",
+      "repositoryFile": "sre-config/knowledge-base/resource-exhaustion.md",
+      "publishedGitBlob": "84ed07752c9e4104b052963af512a1daa2ec0d9c"
+    }
+  ]
+}

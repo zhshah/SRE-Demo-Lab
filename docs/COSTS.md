@@ -2,7 +2,141 @@
 
 This document provides estimated costs for running the Azure SRE Agent Demo Lab.
 
-> **Note:** Costs are estimates based on US East 2 region pricing as of 2024. Actual costs may vary based on region, usage patterns, and Azure pricing changes.
+## Sweden Central Profile in This Checkout
+
+The local parameters target `Az-SRE-Agent-Demo-MAT-RG` in Sweden Central, using
+subscription `b28cc86b-8f84-47e5-a38a-b814b44d047e` (Connectivity Hub - Production).
+AKS manages its nodes in the separate `Az-SRE-Agent-Demo-MAT-RG-nodes` group.
+
+| Component | Selected Configuration | Public USD Estimate |
+|-----------|------------------------|---------------------|
+| AKS control plane | Free | $0/hour |
+| System pool | 1 x Standard_D4as_v5 | $0.184/hour |
+| Workload pool | 1 x Standard_D2as_v5 | $0.092/hour |
+| SRE Agent baseline | Always-on flow, excluding active usage | $0.40/hour |
+| VM and agent subtotal | 730 hours/month | $493.48/month |
+
+Prices were checked on 2026-09-13. The subtotal is **not the total bill or a spending
+cap**: managed disks, Standard Load Balancer, public IPs, Basic ACR, log ingestion,
+four one-minute alert rules, Key Vault operations, and active agent usage add costs.
+Scheduled agent health checks also consume active usage. Trial discounts are not
+assumed; see [current SRE Agent pricing](https://azure.microsoft.com/en-us/pricing/details/sre-agent/).
+
+Both node pools have fixed counts and 32-GiB OS disks. Grafana and managed
+Prometheus are disabled; Container Insights, Log Analytics, Application Insights,
+alerts, and the SRE Agent remain enabled. This is a non-HA test lab, not a
+production configuration. Resources carry `SecurityControl=Ignore` for this demo
+environment. Key Vault purge protection is enabled with seven-day soft-delete
+retention, so immediate reuse of a deleted vault name can require recovery.
+
+Run from the cloned repository directory:
+
+```powershell
+.\scripts\deploy.ps1 -Location swedencentral -ResourceGroupName Az-SRE-Agent-Demo-MAT-RG -Yes
+```
+
+Pause and resume AKS compute without deleting the lab:
+
+```powershell
+az aks stop --name aks-srelab --resource-group Az-SRE-Agent-Demo-MAT-RG --subscription b28cc86b-8f84-47e5-a38a-b814b44d047e
+az aks start --name aks-srelab --resource-group Az-SRE-Agent-Demo-MAT-RG --subscription b28cc86b-8f84-47e5-a38a-b814b44d047e
+```
+
+Stopping AKS does **not** stop SRE Agent, scheduled tasks, disk, registry, or other
+retained-resource charges. To remove the complete lab, the following command
+deletes its resources and data after Azure CLI asks for confirmation. AKS also
+removes its managed node group. No cleanup is run automatically.
+
+```powershell
+az group delete --name Az-SRE-Agent-Demo-MAT-RG --subscription b28cc86b-8f84-47e5-a38a-b814b44d047e
+```
+
+## Recommended Idle Routine
+
+**Stop AKS between demos. Do not stop, resize or delete its VM scale sets directly.**
+Those VMSS instances are the AKS nodes, not a second independent compute bill.
+AKS Free has no control-plane fee; stopping the cluster deallocates both node pools
+through the supported AKS operation.
+
+1. Finish the investigation and use the selected HTML scenario's Restore and Verify.
+2. Consider pausing agent scheduled tasks/response plans and log alerts in the portal
+    during a long maintenance break. Record what you disable and reenable it before
+    the next demo. The power helper deliberately does not alter these settings.
+3. Preview, then stop compute. Both websites will be unavailable while stopped.
+
+```powershell
+.\scripts\set-lab-power.ps1 -Action Status
+.\scripts\set-lab-power.ps1 -Action Stop -WhatIf
+.\scripts\set-lab-power.ps1 -Action Stop
+```
+
+The last command asks for confirmation and checks for `Stopped` / `Succeeded`.
+It never deletes the cluster, PVC or node group. Review mode, closing the agent
+page, and `-SkipScheduledTasks` do not stop the SRE Agent's always-on charge.
+
+### What this saves
+
+| Usage pattern | VM compute / 730-hour month | SRE baseline / month | Subtotal, before all other charges |
+|---------------|----------------------------|----------------------|-----------------------------------|
+| Both running all month | $201.48 | $292.00 | $493.48 |
+| AKS runs 176 hours (8 hours x 22 days) | $48.58 | $292.00 | $340.58 |
+| AKS runs 40 demo hours | $11.04 | $292.00 | $303.04 |
+| AKS stopped for the entire month, agent retained | $0.00 | $292.00 | $292.00 |
+
+Each stopped AKS hour saves about **$0.276** in node compute, or **$6.62 per full
+day**. Stopping AKS alone does not make the lab free: the agent baseline is about
+**$9.60/day**, and disks, public IPs, load balancing, ACR, logs, alert rules and
+agent activity can still charge. Disabling optional automation can reduce active
+usage, but do not budget it as eliminating the agent baseline.
+
+A scoped Cost Management query on 2026-09-13 returned **no posted cost rows** for
+either lab group. That is not proof of zero charges; the deployment was new and
+billing data can lag. These figures use public USD estimates, not an account-specific
+invoice. The pricing site advertises trial offers, but eligibility was not verified.
+
+### Resume before the next demo
+
+```powershell
+.\scripts\set-lab-power.ps1 -Action Start -WhatIf
+.\scripts\set-lab-power.ps1 -Action Start
+```
+
+Follow [the resume and acceptance checks](REDEPLOY.md#resume-an-existing-lab)
+before presenting. Microsoft recommends **15-30 minutes between stopping and
+restarting**. Restart releases/reacquires capacity and can fail during a regional
+shortage, so start ahead of the demo. The API IP can change; refresh credentials
+and run the console updater rather than trusting saved links. AKS keeps stopped
+cluster state for up to 12 months, not indefinitely. Managed disk data is retained,
+but ephemeral container data and standalone pods are not a backup.
+
+### Longer breaks and cost controls
+
+- For weeks without demos, removing the SRE Agent or the whole lab saves more than
+   stopping AKS alone. Treat deletion as a separate, destructive decision: exported
+   runbooks/configuration can be recreated, but learned agent context, live data and
+   portal-only settings are not recovered automatically. Use [the rebuild guide](REDEPLOY.md).
+- Full resource-group deletion removes the AKS-managed node group as part of AKS
+   deletion. Do not independently delete that node group. Confirm completion and
+   inspect retained/soft-deleted resources and delayed charges afterward.
+- Key Vault purge protection blocks immediate purge. A same-name rebuild may require
+   recovering the deleted vault with authorized access. Do not disable protection
+   or force a purge to speed up deployment.
+- Set budget notifications for **both** lab resource groups. Budgets notify; they
+   are not a spending cap and do not stop compute. No notification recipient or
+   budget was configured by this change.
+- A calendar reminder is the simplest way to avoid leaving the lab running. For
+   automation, use an approved scheduler with an identity authorized only to read,
+   stop and start this cluster. No scheduled shutdown has been installed here.
+- Avoid new reservations, savings-plan commitments, Spot nodes or a smaller system
+   pool for this occasional-use demo without a separate assessment. Stop/start gives
+   savings without changing the verified application capacity or fault behavior.
+
+Sources: [supported AKS stop/start behavior](https://learn.microsoft.com/en-us/azure/aks/start-stop-cluster)
+and [SRE Agent billing](https://azure.microsoft.com/en-us/pricing/details/sre-agent/).
+
+## Historical Upstream Estimates
+
+> **Archive only:** The estimates and SKU/free-tier recommendations below describe the original larger East US 2 configuration using 2024 pricing. Do not use them to size, price or redeploy this checkout; the Sweden Central profile above and [rebuild guide](REDEPLOY.md) take precedence.
 
 ## Quick Cost Summary
 
@@ -59,7 +193,7 @@ Cost is based on data ingestion:
 
 | Data Volume | Cost |
 |-------------|------|
-| First 5 GB/day | Free |
+| First 5 GB/month | Free |
 | Additional data | $2.30/GB |
 
 **Expected usage for demo:** 1-3 GB/day = $0-50/month

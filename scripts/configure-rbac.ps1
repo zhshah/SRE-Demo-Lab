@@ -100,6 +100,9 @@ function Set-RoleAssignment {
         --role $RoleDefinition `
         --assignee $PrincipalId `
         --output json 2>$null | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not inspect '$RoleDefinition' assignments at $Scope. Check role-assignment read permissions."
+    }
 
     if ($existing -and $existing.Count -gt 0) {
         Write-Host "       ✅ Already assigned" -ForegroundColor Green
@@ -107,18 +110,20 @@ function Set-RoleAssignment {
     }
 
     try {
-        az role assignment create `
+        $assignmentOutput = az role assignment create `
             --scope $Scope `
             --role $RoleDefinition `
             --assignee-object-id $PrincipalId `
             --assignee-principal-type $PrincipalType `
-            --output none 2>$null
+            --output none 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            throw "Azure CLI returned exit code ${LASTEXITCODE}: $($assignmentOutput.Trim())"
+        }
         
         Write-Host "       ✅ Assigned successfully" -ForegroundColor Green
     }
     catch {
-        Write-Host "       ⚠️  Failed to assign: $_" -ForegroundColor Yellow
-        Write-Host "          This may be due to subscription policies." -ForegroundColor Gray
+        throw "Failed to assign '$RoleDefinition' to $PrincipalId at ${Scope}: $_"
     }
 }
 
@@ -181,17 +186,16 @@ if ($SreAgentPrincipalId) {
         -PrincipalType "ServicePrincipal" `
         -Description "Contributor for SRE Agent (read/write access to resources)"
     
-    # Reader on subscription for broader context
-    Set-RoleAssignment `
-        -Scope "/subscriptions/$subscriptionId" `
-        -RoleDefinition "Reader" `
-        -PrincipalId $SreAgentPrincipalId `
-        -PrincipalType "ServicePrincipal" `
-        -Description "Reader for SRE Agent at subscription level"
-    
     # AKS-specific roles for Kubernetes operations (restart pods, scale, etc.)
     if ($aksCluster) {
         Write-Host "`n  📌 SRE Agent AKS Access:" -ForegroundColor Cyan
+
+        Set-RoleAssignment `
+            -Scope "/subscriptions/$subscriptionId/resourceGroups/$($aksCluster.nodeResourceGroup)" `
+            -RoleDefinition "Reader" `
+            -PrincipalId $SreAgentPrincipalId `
+            -PrincipalType "ServicePrincipal" `
+            -Description "Reader for SRE Agent on the AKS managed node resource group"
         
         # Azure Kubernetes Service Cluster Admin - allows kubectl access
         Set-RoleAssignment `

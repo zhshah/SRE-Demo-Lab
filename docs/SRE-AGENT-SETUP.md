@@ -80,7 +80,7 @@ The script assigns these roles to enable both **diagnosis AND remediation**:
 | Scope | Role | What It Allows |
 |-------|------|----------------|
 | **Resource Group** | Contributor | Read/write access to all resources |
-| **Subscription** | Reader | Broader context for diagnosis |
+| **AKS-managed node resource group** | Reader | Inspect this lab's nodes and networking without subscription-wide access |
 | **AKS Cluster** | AKS Cluster Admin Role | kubectl access to cluster |
 | **AKS Cluster** | AKS RBAC Cluster Admin | Full Kubernetes RBAC permissions |
 | **AKS Cluster** | AKS Contributor Role | Scale nodes, update cluster config |

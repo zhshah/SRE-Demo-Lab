@@ -1,0 +1,2204 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "10239799905005101694"
+    }
+  },
+  "parameters": {
+    "workloadName": {
+      "type": "string",
+      "defaultValue": "srelab",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "Name of the workload (used for naming resources)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus2",
+      "allowedValues": [
+        "eastus2",
+        "swedencentral",
+        "australiaeast"
+      ],
+      "metadata": {
+        "description": "Azure region for deployment. Must be a region supporting SRE Agent (East US 2, Sweden Central, Australia East)"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[format('rg-{0}-{1}', parameters('workloadName'), parameters('location'))]",
+      "metadata": {
+        "description": "Resource group containing the demo lab resources"
+      }
+    },
+    "deployObservability": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Deploy full observability stack (Managed Grafana, Prometheus)"
+      }
+    },
+    "deployAlerts": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Deploy baseline Azure Monitor alert rules for AKS and app telemetry"
+      }
+    },
+    "deploySreAgent": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Deploy Azure SRE Agent for AI-powered diagnostics and remediation"
+      }
+    },
+    "deployActionGroup": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Deploy default Action Group for alert notifications and incident routing"
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "defaultValue": "srelabops",
+      "maxLength": 12,
+      "metadata": {
+        "description": "Action Group short name (max 12 characters)"
+      }
+    },
+    "incidentWebhookServiceUri": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional webhook/Logic App callback URL for default Action Group incident routing"
+      }
+    },
+    "alertActionGroupIds": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Optional action group resource IDs to notify when alerts fire"
+      }
+    },
+    "kubernetesVersion": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "AKS Kubernetes version (empty = latest stable)"
+      }
+    },
+    "aksSkuTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Free",
+        "Standard"
+      ],
+      "metadata": {
+        "description": "AKS control plane pricing tier"
+      }
+    },
+    "enableNodeAutoScaling": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Allow AKS node pools to scale beyond their configured node counts"
+      }
+    },
+    "nodeOsDiskSizeGB": {
+      "type": "int",
+      "defaultValue": 128,
+      "minValue": 30,
+      "metadata": {
+        "description": "Managed OS disk size for each AKS node in GiB"
+      }
+    },
+    "systemNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "allowedValues": [
+        "Standard_D2s_v5",
+        "Standard_D4s_v5",
+        "Standard_D2as_v5",
+        "Standard_D4as_v5"
+      ],
+      "metadata": {
+        "description": "AKS system node pool VM size"
+      }
+    },
+    "userNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5",
+      "allowedValues": [
+        "Standard_D2s_v5",
+        "Standard_D4s_v5",
+        "Standard_D2as_v5",
+        "Standard_D4as_v5"
+      ],
+      "metadata": {
+        "description": "AKS user node pool VM size for workloads"
+      }
+    },
+    "systemNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 5,
+      "metadata": {
+        "description": "System node pool node count"
+      }
+    },
+    "userNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "User node pool node count"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "workload": "sre-agent-demo",
+        "environment": "sandbox",
+        "managedBy": "bicep",
+        "purpose": "demonstration",
+        "SecurityControl": "Ignore"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "variables": {
+    "uniqueSuffix": "[uniqueString(subscription().subscriptionId, parameters('resourceGroupName'))]",
+    "names": {
+      "aks": "[format('aks-{0}', parameters('workloadName'))]",
+      "acr": "[format('acr{0}{1}', parameters('workloadName'), take(variables('uniqueSuffix'), 6))]",
+      "logAnalytics": "[format('log-{0}', parameters('workloadName'))]",
+      "appInsights": "[format('appi-{0}', parameters('workloadName'))]",
+      "grafana": "[format('grafana-{0}-{1}', parameters('workloadName'), take(variables('uniqueSuffix'), 6))]",
+      "prometheus": "[format('prometheus-{0}', parameters('workloadName'))]",
+      "keyVault": "[format('kv-{0}-{1}', parameters('workloadName'), take(variables('uniqueSuffix'), 6))]",
+      "managedIdentity": "[format('id-{0}', parameters('workloadName'))]",
+      "vnet": "[format('vnet-{0}', parameters('workloadName'))]",
+      "sreAgent": "[format('sre-{0}', parameters('workloadName'))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-log-analytics",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('names').logAnalytics]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "retentionInDays": {
+            "value": 30
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "2573812373784337432"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Log Analytics workspace"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "retentionInDays": {
+              "type": "int",
+              "defaultValue": 30,
+              "minValue": 30,
+              "maxValue": 730,
+              "metadata": {
+                "description": "Data retention period in days (30-730)"
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "PerGB2018",
+              "allowedValues": [
+                "PerGB2018",
+                "Free",
+                "Standalone",
+                "PerNode"
+              ],
+              "metadata": {
+                "description": "SKU for the workspace"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "name": "[parameters('sku')]"
+                },
+                "retentionInDays": "[parameters('retentionInDays')]",
+                "features": {
+                  "enableLogAccessUsingOnlyResourcePermissions": true
+                },
+                "workspaceCapping": {
+                  "dailyQuotaGb": -1
+                }
+              }
+            },
+            {
+              "type": "Microsoft.OperationsManagement/solutions",
+              "apiVersion": "2015-11-01-preview",
+              "name": "[format('ContainerInsights({0})', parameters('name'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+              },
+              "plan": {
+                "name": "[format('ContainerInsights({0})', parameters('name'))]",
+                "publisher": "Microsoft",
+                "product": "OMSGallery/ContainerInsights",
+                "promotionCode": ""
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('name'))]"
+            },
+            "workspaceName": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "customerId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('name')), '2023-09-01').customerId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-app-insights",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('names').appInsights]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "workspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics'), '2025-04-01').outputs.workspaceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "14242607557000307715"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Application Insights resource"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "workspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace ID to send telemetry to"
+              }
+            },
+            "applicationType": {
+              "type": "string",
+              "defaultValue": "web",
+              "allowedValues": [
+                "web",
+                "other"
+              ],
+              "metadata": {
+                "description": "Application type"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "[parameters('applicationType')]",
+              "properties": {
+                "Application_Type": "[parameters('applicationType')]",
+                "WorkspaceResourceId": "[parameters('workspaceId')]",
+                "IngestionMode": "LogAnalytics",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled",
+                "DisableIpMasking": false,
+                "RetentionInDays": 90
+              }
+            }
+          ],
+          "outputs": {
+            "appInsightsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/components', parameters('name'))]"
+            },
+            "appInsightsName": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "appId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('name')), '2020-02-02').AppId]"
+            },
+            "instrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('name')), '2020-02-02').InstrumentationKey]"
+            },
+            "connectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('name')), '2020-02-02').ConnectionString]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-network",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('names').vnet]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "addressPrefix": {
+            "value": "10.0.0.0/16"
+          },
+          "aksSubnetPrefix": {
+            "value": "10.0.0.0/22"
+          },
+          "servicesSubnetPrefix": {
+            "value": "10.0.4.0/24"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "6604303556747448523"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the virtual network"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "addressPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/16",
+              "metadata": {
+                "description": "Address prefix for the VNet"
+              }
+            },
+            "aksSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/22",
+              "metadata": {
+                "description": "Address prefix for the AKS subnet"
+              }
+            },
+            "servicesSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.4.0/24",
+              "metadata": {
+                "description": "Address prefix for services subnet (private endpoints)"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-01-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('addressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "snet-aks",
+                    "properties": {
+                      "addressPrefix": "[parameters('aksSubnetPrefix')]",
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  },
+                  {
+                    "name": "snet-services",
+                    "properties": {
+                      "addressPrefix": "[parameters('servicesSubnetPrefix')]",
+                      "privateEndpointNetworkPolicies": "Disabled",
+                      "privateLinkServiceNetworkPolicies": "Enabled"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "aksSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-01-01').subnets[0].id]"
+            },
+            "servicesSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-01-01').subnets[1].id]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-acr",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('names').acr]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "sku": {
+            "value": "Basic"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "15780958331339523497"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the container registry (must be globally unique)"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "Basic",
+              "allowedValues": [
+                "Basic",
+                "Standard",
+                "Premium"
+              ],
+              "metadata": {
+                "description": "SKU for the container registry"
+              }
+            },
+            "adminUserEnabled": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable admin user for local development"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerRegistry/registries",
+              "apiVersion": "2023-11-01-preview",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('sku')]"
+              },
+              "properties": {
+                "adminUserEnabled": "[parameters('adminUserEnabled')]",
+                "publicNetworkAccess": "Enabled",
+                "policies": {
+                  "quarantinePolicy": {
+                    "status": "disabled"
+                  },
+                  "retentionPolicy": {
+                    "days": 7,
+                    "status": "[if(equals(parameters('sku'), 'Premium'), 'enabled', 'disabled')]"
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "acrId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ContainerRegistry/registries', parameters('name'))]"
+            },
+            "acrName": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "loginServer": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', parameters('name')), '2023-11-01-preview').loginServer]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-aks",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('names').aks]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "kubernetesVersion": {
+            "value": "[parameters('kubernetesVersion')]"
+          },
+          "aksSkuTier": {
+            "value": "[parameters('aksSkuTier')]"
+          },
+          "enableNodeAutoScaling": {
+            "value": "[parameters('enableNodeAutoScaling')]"
+          },
+          "nodeOsDiskSizeGB": {
+            "value": "[parameters('nodeOsDiskSizeGB')]"
+          },
+          "enableManagedPrometheus": {
+            "value": "[parameters('deployObservability')]"
+          },
+          "systemNodeVmSize": {
+            "value": "[parameters('systemNodeVmSize')]"
+          },
+          "userNodeVmSize": {
+            "value": "[parameters('userNodeVmSize')]"
+          },
+          "systemNodeCount": {
+            "value": "[parameters('systemNodeCount')]"
+          },
+          "userNodeCount": {
+            "value": "[parameters('userNodeCount')]"
+          },
+          "vnetSubnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-network'), '2025-04-01').outputs.aksSubnetId.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "acrId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-acr'), '2025-04-01').outputs.acrId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7236177069987596172"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the AKS cluster"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "kubernetesVersion": {
+              "type": "string",
+              "metadata": {
+                "description": "Kubernetes version (empty = AKS default)"
+              }
+            },
+            "aksSkuTier": {
+              "type": "string",
+              "defaultValue": "Standard",
+              "allowedValues": [
+                "Free",
+                "Standard"
+              ],
+              "metadata": {
+                "description": "AKS control plane pricing tier"
+              }
+            },
+            "enableNodeAutoScaling": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable cluster autoscaling for both node pools"
+              }
+            },
+            "nodeOsDiskSizeGB": {
+              "type": "int",
+              "defaultValue": 128,
+              "minValue": 30,
+              "metadata": {
+                "description": "Managed OS disk size for each AKS node in GiB"
+              }
+            },
+            "enableManagedPrometheus": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable managed Prometheus metrics collection"
+              }
+            },
+            "systemNodeVmSize": {
+              "type": "string",
+              "metadata": {
+                "description": "VM size for system node pool"
+              }
+            },
+            "userNodeVmSize": {
+              "type": "string",
+              "metadata": {
+                "description": "VM size for user node pool"
+              }
+            },
+            "systemNodeCount": {
+              "type": "int",
+              "metadata": {
+                "description": "System node pool node count"
+              }
+            },
+            "userNodeCount": {
+              "type": "int",
+              "metadata": {
+                "description": "User node pool node count"
+              }
+            },
+            "vnetSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Subnet ID for AKS nodes"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace ID for Container Insights"
+              }
+            },
+            "acrId": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure Container Registry ID for image pull permissions"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerService/managedClusters",
+              "apiVersion": "2024-02-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "sku": {
+                "name": "Base",
+                "tier": "[parameters('aksSkuTier')]"
+              },
+              "properties": {
+                "kubernetesVersion": "[if(empty(parameters('kubernetesVersion')), null(), parameters('kubernetesVersion'))]",
+                "dnsPrefix": "[parameters('name')]",
+                "nodeResourceGroup": "[format('{0}-nodes', resourceGroup().name)]",
+                "oidcIssuerProfile": {
+                  "enabled": true
+                },
+                "securityProfile": {
+                  "workloadIdentity": {
+                    "enabled": true
+                  }
+                },
+                "networkProfile": {
+                  "networkPlugin": "azure",
+                  "networkPolicy": "calico",
+                  "loadBalancerSku": "standard",
+                  "serviceCidr": "10.1.0.0/16",
+                  "dnsServiceIP": "10.1.0.10"
+                },
+                "apiServerAccessProfile": {
+                  "enablePrivateCluster": false
+                },
+                "agentPoolProfiles": [
+                  {
+                    "name": "system",
+                    "count": "[parameters('systemNodeCount')]",
+                    "vmSize": "[parameters('systemNodeVmSize')]",
+                    "osDiskSizeGB": "[parameters('nodeOsDiskSizeGB')]",
+                    "tags": "[parameters('tags')]",
+                    "osType": "Linux",
+                    "osSKU": "AzureLinux",
+                    "mode": "System",
+                    "vnetSubnetID": "[parameters('vnetSubnetId')]",
+                    "enableAutoScaling": "[parameters('enableNodeAutoScaling')]",
+                    "minCount": "[if(parameters('enableNodeAutoScaling'), 1, null())]",
+                    "maxCount": "[if(parameters('enableNodeAutoScaling'), 5, null())]",
+                    "nodeTaints": [
+                      "CriticalAddonsOnly=true:NoSchedule"
+                    ],
+                    "nodeLabels": {
+                      "nodepool-type": "system"
+                    }
+                  },
+                  {
+                    "name": "workload",
+                    "count": "[parameters('userNodeCount')]",
+                    "vmSize": "[parameters('userNodeVmSize')]",
+                    "osDiskSizeGB": "[parameters('nodeOsDiskSizeGB')]",
+                    "tags": "[parameters('tags')]",
+                    "osType": "Linux",
+                    "osSKU": "AzureLinux",
+                    "mode": "User",
+                    "vnetSubnetID": "[parameters('vnetSubnetId')]",
+                    "enableAutoScaling": "[parameters('enableNodeAutoScaling')]",
+                    "minCount": "[if(parameters('enableNodeAutoScaling'), 1, null())]",
+                    "maxCount": "[if(parameters('enableNodeAutoScaling'), 10, null())]",
+                    "nodeLabels": {
+                      "nodepool-type": "user"
+                    }
+                  }
+                ],
+                "addonProfiles": {
+                  "omsagent": {
+                    "enabled": true,
+                    "config": {
+                      "logAnalyticsWorkspaceResourceID": "[parameters('logAnalyticsWorkspaceId')]",
+                      "useAADAuth": "true",
+                      "enableContainerLogV2": "true"
+                    }
+                  },
+                  "azurepolicy": {
+                    "enabled": true
+                  },
+                  "azureKeyvaultSecretsProvider": {
+                    "enabled": true,
+                    "config": {
+                      "enableSecretRotation": "true",
+                      "rotationPollInterval": "2m"
+                    }
+                  }
+                },
+                "azureMonitorProfile": "[if(parameters('enableManagedPrometheus'), createObject('metrics', createObject('enabled', true(), 'kubeStateMetrics', createObject('metricLabelsAllowlist', '*', 'metricAnnotationsAllowList', '*'))), null())]",
+                "autoUpgradeProfile": {
+                  "upgradeChannel": "stable",
+                  "nodeOSUpgradeChannel": "NodeImage"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), parameters('acrId'), 'acrpull')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').identityProfile.kubeletidentity.objectId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', last(split(parameters('logAnalyticsWorkspaceId'), '/')))]",
+              "name": "[guid(parameters('logAnalyticsWorkspaceId'), resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), 'LogAnalyticsContributorKubelet')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '92aaf0da-9dab-42b6-94a3-d43ce8d16293')]",
+                "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').identityProfile.kubeletidentity.objectId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRules",
+              "apiVersion": "2022-06-01",
+              "name": "[format('MSCI-{0}-{1}', replace(parameters('location'), ' ', ''), parameters('name'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "Linux",
+              "properties": {
+                "dataSources": {
+                  "extensions": [
+                    {
+                      "name": "ContainerInsightsExtension",
+                      "streams": [
+                        "Microsoft-ContainerLogV2",
+                        "Microsoft-KubeEvents",
+                        "Microsoft-KubePodInventory",
+                        "Microsoft-ContainerInventory",
+                        "Microsoft-ContainerNodeInventory",
+                        "Microsoft-KubeNodeInventory",
+                        "Microsoft-KubeServices",
+                        "Microsoft-Perf",
+                        "Microsoft-InsightsMetrics"
+                      ],
+                      "extensionSettings": {
+                        "dataCollectionSettings": {
+                          "interval": "1m",
+                          "namespaceFilteringMode": "Off",
+                          "namespaces": [],
+                          "enableContainerLogV2": true
+                        }
+                      },
+                      "extensionName": "ContainerInsights"
+                    }
+                  ]
+                },
+                "destinations": {
+                  "logAnalytics": [
+                    {
+                      "workspaceResourceId": "[parameters('logAnalyticsWorkspaceId')]",
+                      "name": "ciworkspace"
+                    }
+                  ]
+                },
+                "dataFlows": [
+                  {
+                    "streams": [
+                      "Microsoft-ContainerLogV2",
+                      "Microsoft-KubeEvents",
+                      "Microsoft-KubePodInventory",
+                      "Microsoft-ContainerInventory",
+                      "Microsoft-ContainerNodeInventory",
+                      "Microsoft-KubeNodeInventory",
+                      "Microsoft-KubeServices",
+                      "Microsoft-Perf",
+                      "Microsoft-InsightsMetrics"
+                    ],
+                    "destinations": [
+                      "ciworkspace"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ContainerService/managedClusters/providers/dataCollectionRuleAssociations",
+              "apiVersion": "2022-06-01",
+              "name": "[format('{0}/microsoft.insights/ContainerInsightsExtension', parameters('name'))]",
+              "properties": {
+                "description": "Container Insights data collection association",
+                "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSCI-{0}-{1}', replace(parameters('location'), ' ', ''), parameters('name')))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]",
+                "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSCI-{0}-{1}', replace(parameters('location'), ' ', ''), parameters('name')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "aksId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ContainerService/managedClusters', parameters('name'))]"
+            },
+            "aksName": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "aksFqdn": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').fqdn]"
+            },
+            "aksNodeResourceGroup": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').nodeResourceGroup]"
+            },
+            "aksIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01', 'full').identity.principalId]"
+            },
+            "kubeletIdentityObjectId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').identityProfile.kubeletidentity.objectId]"
+            },
+            "oidcIssuerUrl": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', parameters('name')), '2024-02-01').oidcIssuerProfile.issuerURL]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-acr')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-network')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-keyvault",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[variables('names').keyVault]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "enableRbacAuthorization": {
+            "value": true
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "1900463620986518107"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Key Vault"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "enableRbacAuthorization": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable RBAC authorization (recommended)"
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "standard",
+              "allowedValues": [
+                "standard",
+                "premium"
+              ],
+              "metadata": {
+                "description": "SKU for Key Vault"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-07-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "[parameters('skuName')]"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "enableRbacAuthorization": "[parameters('enableRbacAuthorization')]",
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 7,
+                "enablePurgeProtection": true,
+                "publicNetworkAccess": "Enabled",
+                "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "Allow"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "keyVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('name'))]"
+            },
+            "keyVaultName": {
+              "type": "string",
+              "value": "[parameters('name')]"
+            },
+            "vaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('name')), '2023-07-01').vaultUri]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deploySreAgent')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-sre-agent",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "agentName": {
+            "value": "[variables('names').sreAgent]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "accessLevel": {
+            "value": "High"
+          },
+          "appInsightsAppId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-app-insights'), '2025-04-01').outputs.appId.value]"
+          },
+          "appInsightsConnectionString": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-app-insights'), '2025-04-01').outputs.connectionString.value]"
+          },
+          "uniqueSuffix": {
+            "value": "[variables('uniqueSuffix')]"
+          },
+          "managedResourceIds": {
+            "value": [
+              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks'), '2025-04-01').outputs.aksId.value]"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "12169577889115468577"
+            }
+          },
+          "parameters": {
+            "agentName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the SRE Agent"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "accessLevel": {
+              "type": "string",
+              "defaultValue": "High",
+              "allowedValues": [
+                "High",
+                "Low"
+              ],
+              "metadata": {
+                "description": "The access level for the SRE Agent (High = Reader + Contributor + Log Analytics Reader, Low = Reader + Log Analytics Reader)"
+              }
+            },
+            "appInsightsAppId": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights App ID"
+              }
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "metadata": {
+                "description": "Application Insights connection string"
+              }
+            },
+            "uniqueSuffix": {
+              "type": "string",
+              "metadata": {
+                "description": "Unique suffix for resource naming"
+              }
+            },
+            "managedResourceIds": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Resource IDs to add to SRE Agent knowledge graph (e.g. AKS cluster)"
+              }
+            }
+          },
+          "variables": {
+            "identityName": "[format('{0}-{1}', parameters('agentName'), parameters('uniqueSuffix'))]",
+            "roleDefinitions": {
+              "Low": [
+                "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
+                "acdd72a7-3385-48ef-bd42-f606fba81ae7"
+              ],
+              "High": [
+                "92aaf0da-9dab-42b6-94a3-d43ce8d16293",
+                "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                "b24988ac-6180-42a0-ab88-20f7382dd24c"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2024-11-30",
+              "name": "[variables('identityName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "isolationScope": "Regional"
+              }
+            },
+            {
+              "copy": {
+                "name": "roleAssignments",
+                "count": "[length(variables('roleDefinitions')[parameters('accessLevel')])]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), variables('roleDefinitions')[parameters('accessLevel')][copyIndex()])]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roleDefinitions')[parameters('accessLevel')][copyIndex()])]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), '2024-11-30').principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.App/agents",
+              "apiVersion": "2025-05-01-preview",
+              "name": "[parameters('agentName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "SystemAssigned, UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')))]": {}
+                }
+              },
+              "properties": {
+                "knowledgeGraphConfiguration": {
+                  "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
+                  "managedResources": "[parameters('managedResourceIds')]"
+                },
+                "actionConfiguration": {
+                  "accessLevel": "[parameters('accessLevel')]",
+                  "identity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
+                  "mode": "Review"
+                },
+                "incidentManagementConfiguration": {
+                  "type": "AzMonitor"
+                },
+                "logConfiguration": {
+                  "applicationInsightsConfiguration": {
+                    "appId": "[parameters('appInsightsAppId')]",
+                    "connectionString": "[parameters('appInsightsConnectionString')]"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]",
+                "roleAssignments"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.App/agents/{0}', parameters('agentName'))]",
+              "name": "[guid(resourceId('Microsoft.App/agents', parameters('agentName')), deployer().objectId, 'e79298df-d852-4c6d-84f9-5d13249d1e55')]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'e79298df-d852-4c6d-84f9-5d13249d1e55')]",
+                "principalId": "[deployer().objectId]",
+                "principalType": "User"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/agents', parameters('agentName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "agentName": {
+              "type": "string",
+              "value": "[parameters('agentName')]"
+            },
+            "agentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.App/agents', parameters('agentName'))]"
+            },
+            "agentPortalUrl": {
+              "type": "string",
+              "value": "[format('https://portal.azure.com/#view/Microsoft_Azure_PaasServerless/AgentFrameBlade.ReactView/id/{0}', replace(resourceId('Microsoft.App/agents', parameters('agentName')), '/', '%2F'))]"
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
+            },
+            "managedIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName')), '2024-11-30').principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-app-insights')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployObservability')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-observability",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "grafanaName": {
+            "value": "[variables('names').grafana]"
+          },
+          "prometheusName": {
+            "value": "[variables('names').prometheus]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "aksClusterId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks'), '2025-04-01').outputs.aksId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "11158302141919065363"
+            }
+          },
+          "parameters": {
+            "grafanaName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Managed Grafana workspace"
+              }
+            },
+            "prometheusName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the Azure Monitor workspace for Prometheus"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "aksClusterId": {
+              "type": "string",
+              "metadata": {
+                "description": "AKS cluster ID to monitor"
+              }
+            }
+          },
+          "variables": {
+            "aksClusterName": "[last(split(parameters('aksClusterId'), '/'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Monitor/accounts",
+              "apiVersion": "2023-04-03",
+              "name": "[parameters('prometheusName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionEndpoints",
+              "apiVersion": "2022-06-01",
+              "name": "[format('{0}-dce', parameters('prometheusName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "networkAcls": {
+                  "publicNetworkAccess": "Enabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRules",
+              "apiVersion": "2022-06-01",
+              "name": "[format('{0}-dcr', parameters('prometheusName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "dataCollectionEndpointId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-dce', parameters('prometheusName')))]",
+                "dataSources": {
+                  "prometheusForwarder": [
+                    {
+                      "name": "PrometheusDataSource",
+                      "streams": [
+                        "Microsoft-PrometheusMetrics"
+                      ],
+                      "labelIncludeFilter": {}
+                    }
+                  ]
+                },
+                "destinations": {
+                  "monitoringAccounts": [
+                    {
+                      "name": "MonitoringAccount",
+                      "accountResourceId": "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]"
+                    }
+                  ]
+                },
+                "dataFlows": [
+                  {
+                    "streams": [
+                      "Microsoft-PrometheusMetrics"
+                    ],
+                    "destinations": [
+                      "MonitoringAccount"
+                    ]
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]",
+                "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-dce', parameters('prometheusName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2022-06-01",
+              "scope": "[format('Microsoft.ContainerService/managedClusters/{0}', variables('aksClusterName'))]",
+              "name": "configurationAccessEndpoint",
+              "properties": {
+                "description": "Data collection endpoint association for Prometheus metrics",
+                "dataCollectionEndpointId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-dce', parameters('prometheusName')))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-dce', parameters('prometheusName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+              "apiVersion": "2022-06-01",
+              "scope": "[format('Microsoft.ContainerService/managedClusters/{0}', variables('aksClusterName'))]",
+              "name": "[format('{0}-dcr-association', parameters('prometheusName'))]",
+              "properties": {
+                "description": "Data collection rule association for Prometheus metrics",
+                "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', format('{0}-dcr', parameters('prometheusName')))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/dataCollectionRules', format('{0}-dcr', parameters('prometheusName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Dashboard/grafana",
+              "apiVersion": "2023-09-01",
+              "name": "[parameters('grafanaName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "publicNetworkAccess": "Enabled",
+                "zoneRedundancy": "Disabled",
+                "apiKey": "Disabled",
+                "deterministicOutboundIP": "Disabled",
+                "grafanaIntegrations": {
+                  "azureMonitorWorkspaceIntegrations": [
+                    {
+                      "azureMonitorWorkspaceResourceId": "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceId('Microsoft.Dashboard/grafana', parameters('grafanaName')), subscription().subscriptionId, 'MonitoringReader')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')]",
+                "principalId": "[reference(resourceId('Microsoft.Dashboard/grafana', parameters('grafanaName')), '2023-09-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Dashboard/grafana', parameters('grafanaName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Monitor/accounts/{0}', parameters('prometheusName'))]",
+              "name": "[guid(resourceId('Microsoft.Monitor/accounts', parameters('prometheusName')), resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName')), 'MonitoringMetricsPublisher')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')]",
+                "principalId": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName')), '2024-02-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "grafanaId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Dashboard/grafana', parameters('grafanaName'))]"
+            },
+            "grafanaName": {
+              "type": "string",
+              "value": "[parameters('grafanaName')]"
+            },
+            "grafanaEndpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Dashboard/grafana', parameters('grafanaName')), '2023-09-01').endpoint]"
+            },
+            "azureMonitorWorkspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Monitor/accounts', parameters('prometheusName'))]"
+            },
+            "dataCollectionEndpointId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', format('{0}-dce', parameters('prometheusName')))]"
+            },
+            "dataCollectionRuleId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/dataCollectionRules', format('{0}-dcr', parameters('prometheusName')))]"
+            },
+            "dataCollectionEndpointAssociationId": {
+              "type": "string",
+              "value": "[extensionResourceId(resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName')), 'Microsoft.Insights/dataCollectionRuleAssociations', 'configurationAccessEndpoint')]"
+            },
+            "dataCollectionRuleAssociationId": {
+              "type": "string",
+              "value": "[extensionResourceId(resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName')), 'Microsoft.Insights/dataCollectionRuleAssociations', format('{0}-dcr-association', parameters('prometheusName')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployActionGroup')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-default-action-group",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[format('ag-{0}', parameters('workloadName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "shortName": {
+            "value": "[parameters('actionGroupShortName')]"
+          },
+          "webhookServiceUri": {
+            "value": "[parameters('incidentWebhookServiceUri')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "9058806307641902633"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Action Group name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "shortName": {
+              "type": "string",
+              "defaultValue": "srelabops",
+              "maxLength": 12,
+              "metadata": {
+                "description": "Action Group short name (max 12 chars)"
+              }
+            },
+            "webhookServiceUri": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Optional webhook/Logic App callback URL for incident routing"
+              }
+            }
+          },
+          "variables": {
+            "hasWebhookReceiver": "[not(empty(parameters('webhookServiceUri')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/actionGroups",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "enabled": true,
+                "groupShortName": "[parameters('shortName')]",
+                "webhookReceivers": "[if(variables('hasWebhookReceiver'), createArray(createObject('name', 'incident-webhook', 'serviceUri', parameters('webhookServiceUri'), 'useCommonAlertSchema', true())), createArray())]"
+              }
+            }
+          ],
+          "outputs": {
+            "actionGroupId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/actionGroups', parameters('name'))]"
+            },
+            "hasWebhookReceiver": {
+              "type": "bool",
+              "value": "[variables('hasWebhookReceiver')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAlerts')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploy-alerts",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "namePrefix": {
+            "value": "[format('alert-{0}', parameters('workloadName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics'), '2025-04-01').outputs.workspaceId.value]"
+          },
+          "appNamespace": {
+            "value": "pets"
+          },
+          "actionGroupIds": "[if(parameters('deployActionGroup'), createObject('value', concat(parameters('alertActionGroupIds'), createArray(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-default-action-group'), '2025-04-01').outputs.actionGroupId.value))), createObject('value', parameters('alertActionGroupIds')))]"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "11859726695499883982"
+            }
+          },
+          "parameters": {
+            "namePrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Prefix used for alert names"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Analytics workspace resource ID"
+              }
+            },
+            "appNamespace": {
+              "type": "string",
+              "defaultValue": "pets",
+              "metadata": {
+                "description": "Application namespace to monitor"
+              }
+            },
+            "actionGroupIds": {
+              "type": "array",
+              "defaultValue": [],
+              "metadata": {
+                "description": "Optional action group resource IDs for alert notifications"
+              }
+            }
+          },
+          "variables": {
+            "alertActions": {
+              "actionGroups": "[parameters('actionGroupIds')]",
+              "customProperties": {
+                "source": "azure-sre-agent-sandbox",
+                "workload": "pet-store"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2025-01-01-preview",
+              "name": "[format('{0}-pod-restarts', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "LogAlert",
+              "properties": {
+                "displayName": "Pet Store - Pod restart spike",
+                "description": "Triggers when a container restart count increases in the application namespace.",
+                "enabled": true,
+                "severity": 2,
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "evaluationFrequency": "PT1M",
+                "windowSize": "PT5M",
+                "autoMitigate": true,
+                "skipQueryValidation": true,
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "[format('KubePodInventory | where TimeGenerated > ago(5m) | where Namespace == \"{0}\" | summarize FirstRestartCount=min(ContainerRestartCount), LastRestartCount=max(ContainerRestartCount) by ContainerName | where LastRestartCount > FirstRestartCount', parameters('appNamespace'))]",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": "[variables('alertActions')]"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2025-01-01-preview",
+              "name": "[format('{0}-http-5xx', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "LogAlert",
+              "properties": {
+                "displayName": "Pet Store - HTTP 5xx spike",
+                "description": "Triggers when a 5xx response appears in application container access logs.",
+                "enabled": true,
+                "severity": 1,
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "evaluationFrequency": "PT1M",
+                "windowSize": "PT1M",
+                "autoMitigate": true,
+                "skipQueryValidation": true,
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "[format('ContainerLogV2 | where TimeGenerated > ago(2m) | where PodNamespace == \"{0}\" | where LogMessage has \"HTTP/\" | extend StatusCode=toint(extract(\" ([0-9]{{3}}) [0-9]+ \", 1, tostring(LogMessage))) | where StatusCode >= 500', parameters('appNamespace'))]",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": "[variables('alertActions')]"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2025-01-01-preview",
+              "name": "[format('{0}-pod-failures', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "LogAlert",
+              "properties": {
+                "displayName": "Pet Store - Failed or pending pods",
+                "description": "Triggers quickly when failed or pending pods are detected in the application namespace.",
+                "enabled": true,
+                "severity": 2,
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "evaluationFrequency": "PT1M",
+                "windowSize": "PT1M",
+                "autoMitigate": true,
+                "skipQueryValidation": true,
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "[format('KubePodInventory | where TimeGenerated > ago(2m) | where Namespace == \"{0}\" | summarize arg_max(TimeGenerated, *) by ContainerName | where PodStatus in (\"Failed\", \"Pending\") or ContainerStatus =~ \"waiting\"', parameters('appNamespace'))]",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": "[variables('alertActions')]"
+              }
+            },
+            {
+              "type": "Microsoft.Insights/scheduledQueryRules",
+              "apiVersion": "2025-01-01-preview",
+              "name": "[format('{0}-crashloop-oom', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "LogAlert",
+              "properties": {
+                "displayName": "Pet Store - CrashLoop/OOM detected",
+                "description": "Triggers when container inventory reports CrashLoopBackOff, OOM, image-pull, or startup errors.",
+                "enabled": true,
+                "severity": 1,
+                "scopes": [
+                  "[parameters('logAnalyticsWorkspaceId')]"
+                ],
+                "evaluationFrequency": "PT1M",
+                "windowSize": "PT1M",
+                "autoMitigate": true,
+                "skipQueryValidation": true,
+                "criteria": {
+                  "allOf": [
+                    {
+                      "query": "[format('KubePodInventory | where TimeGenerated > ago(2m) | where Namespace == \"{0}\" | summarize arg_max(TimeGenerated, *) by ContainerName | where ContainerStatusReason in~ (\"CrashLoopBackOff\", \"OOMKilled\", \"Error\", \"ImagePullBackOff\", \"ErrImagePull\")', parameters('appNamespace'))]",
+                      "timeAggregation": "Count",
+                      "operator": "GreaterThan",
+                      "threshold": 0,
+                      "failingPeriods": {
+                        "numberOfEvaluationPeriods": 1,
+                        "minFailingPeriodsToAlert": 1
+                      }
+                    }
+                  ]
+                },
+                "actions": "[variables('alertActions')]"
+              }
+            }
+          ],
+          "outputs": {
+            "podRestartAlertId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-pod-restarts', parameters('namePrefix')))]"
+            },
+            "http5xxAlertId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-http-5xx', parameters('namePrefix')))]"
+            },
+            "podFailureAlertId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-pod-failures', parameters('namePrefix')))]"
+            },
+            "crashLoopOomAlertId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-crashloop-oom', parameters('namePrefix')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-default-action-group')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "aksClusterName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks'), '2025-04-01').outputs.aksName.value]"
+    },
+    "aksClusterFqdn": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-aks'), '2025-04-01').outputs.aksFqdn.value]"
+    },
+    "acrLoginServer": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-acr'), '2025-04-01').outputs.loginServer.value]"
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-log-analytics'), '2025-04-01').outputs.workspaceId.value]"
+    },
+    "appInsightsId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-app-insights'), '2025-04-01').outputs.appInsightsId.value]"
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-app-insights'), '2025-04-01').outputs.connectionString.value]"
+    },
+    "keyVaultUri": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-keyvault'), '2025-04-01').outputs.vaultUri.value]"
+    },
+    "grafanaDashboardUrl": {
+      "type": "string",
+      "value": "[if(parameters('deployObservability'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-observability'), '2025-04-01').outputs.grafanaEndpoint.value, '')]"
+    },
+    "azureMonitorWorkspaceId": {
+      "type": "string",
+      "value": "[if(parameters('deployObservability'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-observability'), '2025-04-01').outputs.azureMonitorWorkspaceId.value, '')]"
+    },
+    "prometheusDataCollectionEndpointId": {
+      "type": "string",
+      "value": "[if(parameters('deployObservability'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-observability'), '2025-04-01').outputs.dataCollectionEndpointId.value, '')]"
+    },
+    "prometheusDataCollectionRuleId": {
+      "type": "string",
+      "value": "[if(parameters('deployObservability'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-observability'), '2025-04-01').outputs.dataCollectionRuleId.value, '')]"
+    },
+    "prometheusDcrAssociationId": {
+      "type": "string",
+      "value": "[if(parameters('deployObservability'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-observability'), '2025-04-01').outputs.dataCollectionRuleAssociationId.value, '')]"
+    },
+    "defaultActionGroupId": {
+      "type": "string",
+      "value": "[if(parameters('deployActionGroup'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-default-action-group'), '2025-04-01').outputs.actionGroupId.value, '')]"
+    },
+    "defaultActionGroupHasWebhook": {
+      "type": "bool",
+      "value": "[if(parameters('deployActionGroup'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-default-action-group'), '2025-04-01').outputs.hasWebhookReceiver.value, false())]"
+    },
+    "podRestartAlertId": {
+      "type": "string",
+      "value": "[if(parameters('deployAlerts'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-alerts'), '2025-04-01').outputs.podRestartAlertId.value, '')]"
+    },
+    "http5xxAlertId": {
+      "type": "string",
+      "value": "[if(parameters('deployAlerts'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-alerts'), '2025-04-01').outputs.http5xxAlertId.value, '')]"
+    },
+    "podFailureAlertId": {
+      "type": "string",
+      "value": "[if(parameters('deployAlerts'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-alerts'), '2025-04-01').outputs.podFailureAlertId.value, '')]"
+    },
+    "crashLoopOomAlertId": {
+      "type": "string",
+      "value": "[if(parameters('deployAlerts'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-alerts'), '2025-04-01').outputs.crashLoopOomAlertId.value, '')]"
+    },
+    "sreAgentId": {
+      "type": "string",
+      "value": "[if(parameters('deploySreAgent'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-sre-agent'), '2025-04-01').outputs.agentId.value, '')]"
+    },
+    "sreAgentPortalUrl": {
+      "type": "string",
+      "value": "[if(parameters('deploySreAgent'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-sre-agent'), '2025-04-01').outputs.agentPortalUrl.value, '')]"
+    },
+    "sreAgentName": {
+      "type": "string",
+      "value": "[if(parameters('deploySreAgent'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-sre-agent'), '2025-04-01').outputs.agentName.value, '')]"
+    },
+    "sreAgentManagedIdentityId": {
+      "type": "string",
+      "value": "[if(parameters('deploySreAgent'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-sre-agent'), '2025-04-01').outputs.managedIdentityId.value, '')]"
+    },
+    "sreAgentManagedIdentityPrincipalId": {
+      "type": "string",
+      "value": "[if(parameters('deploySreAgent'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'deploy-sre-agent'), '2025-04-01').outputs.managedIdentityPrincipalId.value, '')]"
+    }
+  }
+}

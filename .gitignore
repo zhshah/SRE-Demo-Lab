@@ -6,7 +6,7 @@
 # Azure
 # =============================================================================
 # Azure credentials (NEVER commit these)
-.azure/
+.azure/*
 azure.json
 azureconfig.json
 **/servicePrincipal.json
@@ -187,3 +187,11 @@ temp/
 .cache/
 
 NUL
+
+# Reviewed backup records; raw credentials and deployment outputs remain ignored.
+!.azure/deployment-plan.md
+!.azure/validate-status.json
+!evidence/scenario-oom-killed-20260913-155848.json
+!infra/bicep/main.json
+!backup/deployment-outputs.redacted.json
+!backup/workspace-manifest.json

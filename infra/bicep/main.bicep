@@ -25,6 +25,9 @@ param workloadName string = 'srelab'
 ])
 param location string = 'eastus2'
 
+@description('Resource group containing the demo lab resources')
+param resourceGroupName string = 'rg-${workloadName}-${location}'
+
 @description('Deploy full observability stack (Managed Grafana, Prometheus)')
 param deployObservability bool = true
 
@@ -50,6 +53,17 @@ param alertActionGroupIds array = []
 
 @description('AKS Kubernetes version (empty = latest stable)')
 param kubernetesVersion string = ''
+
+@description('AKS control plane pricing tier')
+@allowed(['Free', 'Standard'])
+param aksSkuTier string = 'Standard'
+
+@description('Allow AKS node pools to scale beyond their configured node counts')
+param enableNodeAutoScaling bool = true
+
+@description('Managed OS disk size for each AKS node in GiB')
+@minValue(30)
+param nodeOsDiskSizeGB int = 128
 
 @description('AKS system node pool VM size')
 @allowed([
@@ -85,13 +99,13 @@ param tags object = {
   environment: 'sandbox'
   managedBy: 'bicep'
   purpose: 'demonstration'
+  SecurityControl: 'Ignore'
 }
 
 // =============================================================================
 // VARIABLES
 // =============================================================================
 
-var resourceGroupName = 'rg-${workloadName}-${location}'
 var uniqueSuffix = uniqueString(subscription().subscriptionId, resourceGroupName)
 
 // Naming convention for resources
@@ -181,6 +195,10 @@ module aks 'modules/aks.bicep' = {
     location: location
     tags: tags
     kubernetesVersion: kubernetesVersion
+    aksSkuTier: aksSkuTier
+    enableNodeAutoScaling: enableNodeAutoScaling
+    nodeOsDiskSizeGB: nodeOsDiskSizeGB
+    enableManagedPrometheus: deployObservability
     systemNodeVmSize: systemNodeVmSize
     userNodeVmSize: userNodeVmSize
     systemNodeCount: systemNodeCount

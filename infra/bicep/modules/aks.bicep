@@ -21,6 +21,20 @@ param tags object
 @description('Kubernetes version (empty = AKS default)')
 param kubernetesVersion string
 
+@description('AKS control plane pricing tier')
+@allowed(['Free', 'Standard'])
+param aksSkuTier string = 'Standard'
+
+@description('Enable cluster autoscaling for both node pools')
+param enableNodeAutoScaling bool = true
+
+@description('Managed OS disk size for each AKS node in GiB')
+@minValue(30)
+param nodeOsDiskSizeGB int = 128
+
+@description('Enable managed Prometheus metrics collection')
+param enableManagedPrometheus bool = true
+
 @description('VM size for system node pool')
 param systemNodeVmSize string
 
@@ -55,11 +69,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   }
   sku: {
     name: 'Base'
-    tier: 'Standard' // Standard tier for SLA - recommended for demos
+    tier: aksSkuTier
   }
   properties: {
     kubernetesVersion: empty(kubernetesVersion) ? null : kubernetesVersion
     dnsPrefix: name
+    nodeResourceGroup: '${resourceGroup().name}-nodes'
 
     // Enable features needed for SRE Agent
     oidcIssuerProfile: {
@@ -92,13 +107,15 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         name: 'system'
         count: systemNodeCount
         vmSize: systemNodeVmSize
+        osDiskSizeGB: nodeOsDiskSizeGB
+        tags: tags
         osType: 'Linux'
         osSKU: 'AzureLinux'
         mode: 'System'
         vnetSubnetID: vnetSubnetId
-        enableAutoScaling: true
-        minCount: 1
-        maxCount: 5
+        enableAutoScaling: enableNodeAutoScaling
+        minCount: enableNodeAutoScaling ? 1 : null
+        maxCount: enableNodeAutoScaling ? 5 : null
         nodeTaints: [
           'CriticalAddonsOnly=true:NoSchedule'
         ]
@@ -110,13 +127,15 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         name: 'workload'
         count: userNodeCount
         vmSize: userNodeVmSize
+        osDiskSizeGB: nodeOsDiskSizeGB
+        tags: tags
         osType: 'Linux'
         osSKU: 'AzureLinux'
         mode: 'User'
         vnetSubnetID: vnetSubnetId
-        enableAutoScaling: true
-        minCount: 1
-        maxCount: 10
+        enableAutoScaling: enableNodeAutoScaling
+        minCount: enableNodeAutoScaling ? 1 : null
+        maxCount: enableNodeAutoScaling ? 10 : null
         nodeLabels: {
           'nodepool-type': 'user'
         }
@@ -146,7 +165,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     }
 
     // Azure Monitor metrics
-    azureMonitorProfile: {
+    azureMonitorProfile: enableManagedPrometheus ? {
       metrics: {
         enabled: true
         kubeStateMetrics: {
@@ -154,7 +173,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
           metricAnnotationsAllowList: '*'
         }
       }
-    }
+    } : null
 
     // Auto-upgrade channel
     autoUpgradeProfile: {

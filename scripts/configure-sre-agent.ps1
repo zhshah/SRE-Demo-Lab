@@ -248,17 +248,22 @@ function Set-ArmAgentConnector {
         }
     } | ConvertTo-Json -Depth 5 -Compress
 
-    $output = az rest `
-        --method put `
-        --url $url `
-        --body $body `
-        --only-show-errors `
-        --output json 2>&1 | Out-String
-    $exitCode = $LASTEXITCODE
+    $armToken = az account get-access-token --resource https://management.azure.com/ --query accessToken --output tsv 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($armToken)) {
+        return @{ ExitCode = 1; Body = 'Could not acquire an ARM access token.' }
+    }
 
-    return @{
-        ExitCode = $exitCode
-        Body     = $output
+    try {
+        $response = Invoke-WebRequest -Method Put -Uri $url `
+            -Headers @{ Authorization = "Bearer $armToken" } `
+            -ContentType 'application/json' -Body $body -SkipHttpErrorCheck
+        return @{
+            ExitCode = $(if (Test-SuccessStatus -StatusCode $response.StatusCode) { 0 } else { 1 })
+            Body     = $response.Content
+        }
+    }
+    catch {
+        return @{ ExitCode = 1; Body = $_.Exception.Message }
     }
 }
 
@@ -378,9 +383,15 @@ if (-not $SkipAgents) {
 
     # Check for Python + PyYAML
     $python = $null
-    if (Get-Command python3 -ErrorAction SilentlyContinue) { $python = 'python3' }
-    elseif (Get-Command python -ErrorAction SilentlyContinue) { $python = 'python' }
-    elseif (Test-Path '/opt/az/bin/python3') { $python = '/opt/az/bin/python3' }
+    foreach ($pythonCandidate in @('python3', 'python', '/opt/az/bin/python3')) {
+        $pythonCommand = Get-Command $pythonCandidate -ErrorAction SilentlyContinue
+        if (-not $pythonCommand) { continue }
+        $null = & $pythonCommand.Source --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $python = $pythonCommand.Source
+            break
+        }
+    }
 
     $converterScript = Join-Path $PSScriptRoot "yaml-to-agent-json.py"
     $agentsDir = Join-Path $PSScriptRoot "..\sre-config\agents"
@@ -802,6 +813,14 @@ else {
 # ============================================================================
 # Step 6: Summary and Portal Guidance
 # ============================================================================
+if ($configurationFailures.Count -gt 0) {
+    Write-Host "Configuration completed with $($configurationFailures.Count) failure(s):" -ForegroundColor Red
+    foreach ($failure in $configurationFailures) {
+        Write-Host "  - $failure" -ForegroundColor Red
+    }
+    exit 1
+}
+
 $hasGitHub = -not [string]::IsNullOrWhiteSpace($GitHubPat)
 
 Write-Host @"
@@ -840,12 +859,4 @@ Write-Host "  5. Ask the agent: 'Why are pods crashing in the pets namespace?'" 
 Write-Host "  6. Or invoke directly: /agent incident-handler" -ForegroundColor White
 Write-Host ""
 
-if ($configurationFailures.Count -gt 0) {
-    Write-Host "Configuration completed with $($configurationFailures.Count) failure(s):" -ForegroundColor Red
-    foreach ($failure in $configurationFailures) {
-        Write-Host "  - $failure" -ForegroundColor Red
-    }
-    exit 1
-}
-
-Write-Host "Configuration verified successfully." -ForegroundColor Green
+Write-Host "Configuration completed successfully." -ForegroundColor Green

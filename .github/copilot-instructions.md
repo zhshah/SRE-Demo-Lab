@@ -1,5 +1,21 @@
 # Azure SRE Agent Demo Lab - Copilot Instructions
 
+## Local Checkout Profile
+
+The verified local profile takes precedence over generic upstream examples below.
+Read [the rebuild guide](../docs/REDEPLOY.md) before deployment or recovery, and
+[the cost guide](../docs/COSTS.md) before shutdown/deletion. Use the current checkout,
+not an unmodified upstream clone, to preserve the recorded fixes and offline console.
+
+- Keep Sweden Central, subscription `b28cc86b-8f84-47e5-a38a-b814b44d047e`, RG `Az-SRE-Agent-Demo-MAT-RG`, AKS `aks-srelab`, and its `-nodes` managed group unless the user approves a different scope.
+- Retain Free AKS, fixed D4as_v5 + D2as_v5 nodes, 32-GiB OS disks, no autoscaling and no optional Grafana/Prometheus.
+- Preserve `SecurityControl=Ignore` in IaC, node-pool/StorageClass tags and generated-alert tagging for this demo. Do not generalize this policy accommodation to production.
+- Never automatically purge a deleted Key Vault, broaden agent permissions to the subscription, stop VMSS instances directly, or run a stop/delete operation without user authorization.
+- Run `scripts/test-deployment-safety.ps1` after editing deployment helpers. Run `scripts/deploy.ps1 -CheckPrerequisitesOnly` before an Azure preview/deployment.
+- Keep observed baseline image digests and deliberate fault settings. `virtual-worker` has zero replicas; the action group has no notification receiver by default.
+- Refresh the console with `scripts/update-demo-console.ps1` after endpoint/path changes. Do not mistake its checkpoints or impact icons for live health.
+- A fresh destructive rebuild is not required to verify local changes; report precisely which local, dry-run and live checks actually ran.
+
 ## Project Overview
 
 This repository contains a fully automated Azure SRE Agent demo lab environment. It deploys:
@@ -92,7 +108,8 @@ Type `menu` in the terminal to see all available commands. Key shortcuts:
 
 ### Deploy Infrastructure
 ```powershell
-.\scripts\deploy.ps1 -Location eastus2 -Yes
+.\scripts\deploy.ps1 -WhatIf
+.\scripts\deploy.ps1
 ```
 
 ### SRE Agent Deployment
@@ -138,8 +155,8 @@ kubectl apply -f k8s/base/application.yaml
 
 ## Cost Considerations
 
-- **Full deployment**: ~$22-28/day (~$650-850/month)
-- **With SRE Agent**: ~$32-38/day (~$950-1,150/month)
+- **Current VM + SRE Agent subtotal**: ~$16.22/day (~$493.48/730-hour month), excluding supporting resources and active usage.
+- **AKS pause** saves ~$0.276 per stopped hour; the ~$0.40/hour agent baseline and retained-resource charges remain.
 - **See**: `docs/COSTS.md` for detailed breakdown
 
 ## When Helping with This Project

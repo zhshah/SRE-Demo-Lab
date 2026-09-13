@@ -1,0 +1,1362 @@
+{
+  "scenario": "oom-killed",
+  "resourceGroup": "Az-SRE-Agent-Demo-MAT-RG",
+  "startedAt": "2026-09-13T12:58:48.0599841Z",
+  "stages": [
+    {
+      "stage": "baseline",
+      "status": "running",
+      "detail": "",
+      "timestamp": "2026-09-13T12:58:48.0677513Z"
+    },
+    {
+      "stage": "baseline",
+      "status": "passed",
+      "detail": "",
+      "timestamp": "2026-09-13T12:58:54.5480955Z"
+    },
+    {
+      "stage": "fault-injection",
+      "status": "running",
+      "detail": "",
+      "timestamp": "2026-09-13T12:58:54.5486981Z"
+    },
+    {
+      "stage": "fault-injection",
+      "status": "passed",
+      "detail": "",
+      "timestamp": "2026-09-13T12:58:55.8840954Z"
+    },
+    {
+      "stage": "fault-observation",
+      "status": "running",
+      "detail": "",
+      "timestamp": "2026-09-13T12:58:55.8850546Z"
+    },
+    {
+      "stage": "fault-observation",
+      "status": "passed",
+      "detail": "",
+      "timestamp": "2026-09-13T12:59:13.4956188Z"
+    },
+    {
+      "stage": "alert",
+      "status": "not-observed",
+      "detail": "External Azure Monitor/SRE Agent trigger evidence was not supplied.",
+      "timestamp": "2026-09-13T12:59:13.4961690Z"
+    },
+    {
+      "stage": "investigation",
+      "status": "not-observed",
+      "detail": "Run the SRE Agent prompt separately and attach evidence if available.",
+      "timestamp": "2026-09-13T12:59:13.4983255Z"
+    },
+    {
+      "stage": "approval",
+      "status": "not-observed",
+      "detail": "No remediation approval event was supplied.",
+      "timestamp": "2026-09-13T12:59:13.4990182Z"
+    },
+    {
+      "stage": "restore",
+      "status": "running",
+      "detail": "",
+      "timestamp": "2026-09-13T12:59:13.4995390Z"
+    },
+    {
+      "stage": "restore",
+      "status": "passed",
+      "detail": "",
+      "timestamp": "2026-09-13T12:59:19.0133690Z"
+    },
+    {
+      "stage": "recovery",
+      "status": "running",
+      "detail": "",
+      "timestamp": "2026-09-13T12:59:19.0142118Z"
+    },
+    {
+      "stage": "recovery",
+      "status": "passed",
+      "detail": "",
+      "timestamp": "2026-09-13T13:00:09.7181258Z"
+    }
+  ],
+  "baseline": {
+    "pods": [
+      {
+        "name": "makeline-service-698d8f96c9-6zwdb",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "makeline-service-698d8f96c9-cpx8z",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "mongodb-8885d9c8b-rj97f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "order-service-65898455c6-2jzb7",
+        "phase": "Running",
+        "restarts": 1.0,
+        "ready": 1
+      },
+      {
+        "name": "order-service-65898455c6-dkhjl",
+        "phase": "Running",
+        "restarts": 1.0,
+        "ready": 1
+      },
+      {
+        "name": "product-service-746c64c7f4-dwp5f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "product-service-746c64c7f4-pngv6",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "rabbitmq-7c4bdb575c-wmqcx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-admin-64764cc7f5-zbncc",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-qg9js",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-rl7gw",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "virtual-customer-86848d44cd-fbhsx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      }
+    ],
+    "deployments": [
+      {
+        "name": "makeline-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "mongodb",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "order-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "product-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "rabbitmq",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-admin",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-front",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "virtual-customer",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "virtual-worker",
+        "ready": null,
+        "desired": 0
+      }
+    ],
+    "events": [
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"ghcr.io/azure-samples/aks-store-demo/virtual-customer:2.2.0\"",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"rabbitmq:4.3.5-management-alpine\" in 10.037s (10.037s including waiting). Image size: 88893156 bytes.",
+        "involvedObject": "rabbitmq-7c4bdb575c-wmqcx"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/product-service:2.2.0\" in 7.041s (7.041s including waiting). Image size: 35474758 bytes.",
+        "involvedObject": "product-service-746c64c7f4-dwp5f"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/makeline-service:2.2.0\" in 5.287s (5.287s including waiting). Image size: 24024917 bytes.",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/makeline-service:2.2.0\" in 5.331s (5.331s including waiting). Image size: 24024917 bytes.",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/product-service:2.2.0\" in 7.087s (7.087s including waiting). Image size: 35474758 bytes.",
+        "involvedObject": "product-service-746c64c7f4-pngv6"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "rabbitmq-7c4bdb575c-wmqcx"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "rabbitmq-7c4bdb575c-wmqcx"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/store-front:2.2.0\" in 4.652s (4.652s including waiting). Image size: 9507431 bytes.",
+        "involvedObject": "store-front-6dd96885d5-rl7gw"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "store-front-6dd96885d5-rl7gw"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "SuccessfulAttachVolume",
+        "type": "Normal",
+        "message": "AttachVolume.Attach succeeded for volume \"pvc-184486e2-9441-400e-841d-5ef07fbaee0c\" ",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "store-front-6dd96885d5-rl7gw"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "product-service-746c64c7f4-pngv6"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "product-service-746c64c7f4-pngv6"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "store-front-6dd96885d5-qg9js"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "store-front-6dd96885d5-qg9js"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "product-service-746c64c7f4-dwp5f"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/store-admin:2.2.0\" in 4.862s (4.862s including waiting). Image size: 7952008 bytes.",
+        "involvedObject": "store-admin-64764cc7f5-zbncc"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "store-admin-64764cc7f5-zbncc"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/store-front:2.2.0\" in 4.987s (4.987s including waiting). Image size: 9507431 bytes.",
+        "involvedObject": "store-front-6dd96885d5-qg9js"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "product-service-746c64c7f4-dwp5f"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/virtual-customer:2.2.0\" in 4.523s (4.523s including waiting). Image size: 35272676 bytes.",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "store-admin-64764cc7f5-zbncc"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "EnsuredLoadBalancer",
+        "type": "Normal",
+        "message": "Ensured load balancer",
+        "involvedObject": "store-front"
+      },
+      {
+        "reason": "EnsuringLoadBalancer",
+        "type": "Normal",
+        "message": "Ensuring load balancer",
+        "involvedObject": "store-admin"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" in 13.115s (13.115s including waiting). Image size: 74577609 bytes.",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"mongo:4.4\"",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" in 12.964s (12.964s including waiting). Image size: 74577609 bytes.",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "EnsuredLoadBalancer",
+        "type": "Normal",
+        "message": "Ensured load balancer",
+        "involvedObject": "store-admin"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Liveness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Liveness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"mongo:4.4\" in 9.301s (9.301s including waiting). Image size: 166163173 bytes.",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.13:3000/health\": dial tcp 10.0.0.13:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.27:3000/health\": dial tcp 10.0.0.27:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      }
+    ]
+  },
+  "fault": {
+    "pods": [
+      {
+        "name": "makeline-service-698d8f96c9-6zwdb",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "makeline-service-698d8f96c9-cpx8z",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "mongodb-8885d9c8b-rj97f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "order-service-7b876c4dd-ckwkf",
+        "phase": "Running",
+        "restarts": 1.0,
+        "ready": 0
+      },
+      {
+        "name": "order-service-7b876c4dd-v9rlb",
+        "phase": "Running",
+        "restarts": 1.0,
+        "ready": 0
+      },
+      {
+        "name": "product-service-746c64c7f4-dwp5f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "product-service-746c64c7f4-pngv6",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "rabbitmq-7c4bdb575c-wmqcx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-admin-64764cc7f5-zbncc",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-qg9js",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-rl7gw",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "virtual-customer-86848d44cd-fbhsx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      }
+    ],
+    "deployments": [
+      {
+        "name": "makeline-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "mongodb",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "order-service",
+        "ready": null,
+        "desired": 2
+      },
+      {
+        "name": "product-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "rabbitmq",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-admin",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-front",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "virtual-customer",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "virtual-worker",
+        "ready": null,
+        "desired": 0
+      }
+    ],
+    "events": [
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/store-admin:2.2.0\" in 4.862s (4.862s including waiting). Image size: 7952008 bytes.",
+        "involvedObject": "store-admin-64764cc7f5-zbncc"
+      },
+      {
+        "reason": "SuccessfulAttachVolume",
+        "type": "Normal",
+        "message": "AttachVolume.Attach succeeded for volume \"pvc-184486e2-9441-400e-841d-5ef07fbaee0c\" ",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "product-service-746c64c7f4-dwp5f"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/virtual-customer:2.2.0\" in 4.523s (4.523s including waiting). Image size: 35272676 bytes.",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "store-admin-64764cc7f5-zbncc"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "virtual-customer-86848d44cd-fbhsx"
+      },
+      {
+        "reason": "EnsuredLoadBalancer",
+        "type": "Normal",
+        "message": "Ensured load balancer",
+        "involvedObject": "store-front"
+      },
+      {
+        "reason": "EnsuringLoadBalancer",
+        "type": "Normal",
+        "message": "Ensuring load balancer",
+        "involvedObject": "store-admin"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" in 13.115s (13.115s including waiting). Image size: 74577609 bytes.",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" in 12.964s (12.964s including waiting). Image size: 74577609 bytes.",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"mongo:4.4\"",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "EnsuredLoadBalancer",
+        "type": "Normal",
+        "message": "Ensured load balancer",
+        "involvedObject": "store-admin"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Liveness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-6zwdb"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Liveness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"mongo:4.4\" in 9.301s (9.301s including waiting). Image size: 166163173 bytes.",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.27:3000/health\": dial tcp 10.0.0.27:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.13:3000/health\": dial tcp 10.0.0.13:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Killing",
+        "type": "Normal",
+        "message": "Stopping container order-service",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled down replica set order-service-65898455c6 from 2 to 0",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-65898455c6-dkhjl",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-65898455c6-2jzb7",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "Killing",
+        "type": "Normal",
+        "message": "Stopping container order-service",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled up replica set order-service-7b876c4dd from 0 to 2",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-7b876c4dd-v9rlb to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-7b876c4dd-ckwkf to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-7b876c4dd-ckwkf",
+        "involvedObject": "order-service-7b876c4dd"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-7b876c4dd-v9rlb",
+        "involvedObject": "order-service-7b876c4dd"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\"",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\"",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" in 4.934s (4.934s including waiting). Image size: 75066743 bytes.",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" in 4.993s (4.993s including waiting). Image size: 75066743 bytes.",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "BackOff",
+        "type": "Warning",
+        "message": "Back-off restarting failed container order-service in pod order-service-7b876c4dd-ckwkf_pets(b39d10c6-40d2-4cb6-866d-40c47641a410)",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "BackOff",
+        "type": "Warning",
+        "message": "Back-off restarting failed container order-service in pod order-service-7b876c4dd-v9rlb_pets(0d578291-5998-4033-903e-617fc2ab83d5)",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      }
+    ]
+  },
+  "restored": {
+    "pods": [
+      {
+        "name": "makeline-service-698d8f96c9-6zwdb",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "makeline-service-698d8f96c9-cpx8z",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "mongodb-8885d9c8b-rj97f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "order-service-65898455c6-96htt",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "order-service-65898455c6-k82bs",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "product-service-746c64c7f4-dwp5f",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "product-service-746c64c7f4-pngv6",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "rabbitmq-7c4bdb575c-wmqcx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-admin-64764cc7f5-zbncc",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-qg9js",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "store-front-6dd96885d5-rl7gw",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      },
+      {
+        "name": "virtual-customer-86848d44cd-fbhsx",
+        "phase": "Running",
+        "restarts": 0.0,
+        "ready": 1
+      }
+    ],
+    "deployments": [
+      {
+        "name": "makeline-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "mongodb",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "order-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "product-service",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "rabbitmq",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-admin",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "store-front",
+        "ready": 2,
+        "desired": 2
+      },
+      {
+        "name": "virtual-customer",
+        "ready": 1,
+        "desired": 1
+      },
+      {
+        "name": "virtual-worker",
+        "ready": null,
+        "desired": 0
+      }
+    ],
+    "events": [
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "mongodb-8885d9c8b-rj97f"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+        "involvedObject": "makeline-service-698d8f96c9-cpx8z"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.13:3000/health\": dial tcp 10.0.0.13:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.27:3000/health\": dial tcp 10.0.0.27:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-65898455c6-2jzb7",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled down replica set order-service-65898455c6 from 2 to 0",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-65898455c6-dkhjl",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "Killing",
+        "type": "Normal",
+        "message": "Stopping container order-service",
+        "involvedObject": "order-service-65898455c6-2jzb7"
+      },
+      {
+        "reason": "Killing",
+        "type": "Normal",
+        "message": "Stopping container order-service",
+        "involvedObject": "order-service-65898455c6-dkhjl"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled up replica set order-service-7b876c4dd from 0 to 2",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-7b876c4dd-v9rlb",
+        "involvedObject": "order-service-7b876c4dd"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-7b876c4dd-ckwkf",
+        "involvedObject": "order-service-7b876c4dd"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-7b876c4dd-ckwkf to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-7b876c4dd-v9rlb to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\"",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Pulling",
+        "type": "Normal",
+        "message": "Pulling image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\"",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" in 4.993s (4.993s including waiting). Image size: 75066743 bytes.",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Successfully pulled image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" in 4.934s (4.934s including waiting). Image size: 75066743 bytes.",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled up replica set order-service-65898455c6 from 0 to 1",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-65898455c6-96htt to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-65898455c6-96htt"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-65898455c6-96htt",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-96htt"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-96htt"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-96htt"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:latest\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "BackOff",
+        "type": "Warning",
+        "message": "Back-off restarting failed container order-service in pod order-service-7b876c4dd-v9rlb_pets(0d578291-5998-4033-903e-617fc2ab83d5)",
+        "involvedObject": "order-service-7b876c4dd-v9rlb"
+      },
+      {
+        "reason": "BackOff",
+        "type": "Warning",
+        "message": "Back-off restarting failed container order-service in pod order-service-7b876c4dd-ckwkf_pets(b39d10c6-40d2-4cb6-866d-40c47641a410)",
+        "involvedObject": "order-service-7b876c4dd-ckwkf"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.8:3000/health\": dial tcp 10.0.0.8:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-96htt"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-7b876c4dd-ckwkf",
+        "involvedObject": "order-service-7b876c4dd"
+      },
+      {
+        "reason": "SuccessfulCreate",
+        "type": "Normal",
+        "message": "Created pod: order-service-65898455c6-k82bs",
+        "involvedObject": "order-service-65898455c6"
+      },
+      {
+        "reason": "Scheduled",
+        "type": "Normal",
+        "message": "Successfully assigned pets/order-service-65898455c6-k82bs to aks-workload-42728313-vmss000000",
+        "involvedObject": "order-service-65898455c6-k82bs"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled down replica set order-service-7b876c4dd from 2 to 1",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled up replica set order-service-65898455c6 from 1 to 2",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "Started",
+        "type": "Normal",
+        "message": "Container started",
+        "involvedObject": "order-service-65898455c6-k82bs"
+      },
+      {
+        "reason": "Pulled",
+        "type": "Normal",
+        "message": "Container image \"ghcr.io/azure-samples/aks-store-demo/order-service:2.2.0\" already present on machine and can be accessed by the pod",
+        "involvedObject": "order-service-65898455c6-k82bs"
+      },
+      {
+        "reason": "Created",
+        "type": "Normal",
+        "message": "Container created",
+        "involvedObject": "order-service-65898455c6-k82bs"
+      },
+      {
+        "reason": "Unhealthy",
+        "type": "Warning",
+        "message": "Startup probe failed: Get \"http://10.0.0.24:3000/health\": dial tcp 10.0.0.24:3000: connect: connection refused",
+        "involvedObject": "order-service-65898455c6-k82bs"
+      },
+      {
+        "reason": "ScalingReplicaSet",
+        "type": "Normal",
+        "message": "Scaled down replica set order-service-7b876c4dd from 1 to 0",
+        "involvedObject": "order-service"
+      },
+      {
+        "reason": "SuccessfulDelete",
+        "type": "Normal",
+        "message": "Deleted pod: order-service-7b876c4dd-v9rlb",
+        "involvedObject": "order-service-7b876c4dd"
+      }
+    ]
+  },
+  "finishedAt": "2026-09-13T13:00:09.7224240Z",
+  "status": "passed"
+}

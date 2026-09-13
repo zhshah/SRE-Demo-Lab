@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Presenter runbook for the Sweden Central Azure SRE Agent demo lab.">
+  <title>SRE Demo Desk | Sweden Central</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+    (() => {
+      const explicitTheme = new URLSearchParams(window.location.search).get("scoutTheme");
+      if (explicitTheme === "light" || explicitTheme === "dark") document.documentElement.dataset.theme = explicitTheme;
+      else {
+        try {
+          const savedTheme = localStorage.getItem("sre-demo-theme");
+          if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+        } catch {}
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    [hidden] { display: none !important; }
+    body { margin: 0; min-width: 320px; background: var(--cp-surface); color: var(--cp-text); font: 14px/1.55 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    button, a, input, select, textarea, summary { -webkit-tap-highlight-color: var(--cp-accent-soft); }
+    button { cursor: pointer; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    a { color: var(--cp-link); text-underline-offset: 3px; }
+    :focus-visible { outline: 2px solid var(--cp-link); outline-offset: 3px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 25px; font-weight: 700; line-height: 1.2; }
+    h2 { font-size: 25px; line-height: 1.25; font-weight: 650; }
+    h3 { font-size: 15px; font-weight: 650; }
+    svg { flex-shrink: 0; vertical-align: middle; }
+    code, pre, .mono { font-family: Consolas, "Courier New", Courier, monospace; }
+    code { font-size: .94em; overflow-wrap: anywhere; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    .skip-link { position: fixed; top: -80px; left: 16px; padding: 12px; background: var(--cp-surface); z-index: 30; }
+    .skip-link:focus { top: 12px; }
+    .topbar { min-height: 88px; border-top: 4px solid var(--cp-accent); border-bottom: 1px solid var(--cp-border); padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand-mark { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: var(--cp-accent); color: var(--cp-accent-fg); flex-shrink: 0; }
+    .brand-subtitle { color: var(--cp-text-soft); font-size: 12px; margin-top: 4px; }
+    .toolbar, .toolbar-links, .toolbar-tools, .inline, .actions { display: flex; align-items: center; gap: 8px; }
+    .toolbar { gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+    .toolbar-tools { padding-left: 16px; border-left: 1px solid var(--cp-border); }
+    .icon-button { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--cp-border); border-radius: 6px; background: var(--cp-surface); color: var(--cp-text-muted); }
+    .icon-button:hover { background: var(--cp-surface-soft); color: var(--cp-text); border-color: var(--cp-border-strong); }
+    .icon-button[aria-pressed="true"] { color: var(--cp-accent); border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+    .link-button, .command-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 36px; padding: 7px 12px; border: 1px solid var(--cp-border); border-radius: 6px; background: var(--cp-surface); color: var(--cp-text); text-decoration: none; font-size: 13px; font-weight: 600; }
+    .link-button:hover, .command-button:hover { background: var(--cp-surface-soft); }
+    .command-button.primary, .link-button.primary { color: var(--cp-accent-fg); background: var(--cp-accent); border-color: var(--cp-accent); }
+    .command-button.primary:hover, .link-button.primary:hover { background: var(--cp-accent-hover); }
+    .environment-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 28px; padding: 12px 28px; background: var(--cp-surface-soft); border-bottom: 1px solid var(--cp-border); font-size: 12px; }
+    .environment-item { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+    .environment-item span { color: var(--cp-text-soft); white-space: nowrap; }
+    .environment-item strong { font-weight: 600; overflow-wrap: anywhere; }
+    .review-label { margin-left: auto; display: flex; align-items: center; gap: 7px; color: var(--cp-accent); font-weight: 600; }
+    .global-nav { display: flex; align-items: center; gap: 24px; padding: 0 28px; border-bottom: 1px solid var(--cp-border); }
+    .global-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 2px; border: 0; border-bottom: 3px solid var(--cp-surface); background: var(--cp-surface); color: var(--cp-text-muted); font-weight: 600; font-size: 13px; }
+    .global-tab[aria-selected="true"] { color: var(--cp-accent); border-bottom-color: var(--cp-accent); }
+    .snapshot-label { margin-left: auto; color: var(--cp-text-soft); font-size: 11px; }
+    .desk { display: grid; grid-template-columns: 234px minmax(0, 1fr); min-height: calc(100vh - 188px); }
+    .scenario-sidebar { padding: 24px 14px; border-right: 1px solid var(--cp-border); background: var(--cp-bg-elevated); }
+    .sidebar-heading { display: flex; align-items: center; justify-content: space-between; padding: 0 10px; margin-bottom: 16px; }
+    .eyebrow { font-size: 11px; font-weight: 700; color: var(--cp-text-soft); text-transform: uppercase; }
+    .count-badge { font: 11px Consolas, "Courier New", monospace; color: var(--cp-text-soft); }
+    .search-field { display: flex; align-items: center; gap: 8px; margin: 0 6px 18px; border: 1px solid var(--cp-border); border-radius: 6px; background: var(--cp-surface); padding: 8px 10px; color: var(--cp-text-soft); }
+    .search-field:focus-within { border-color: var(--cp-link); }
+    .search-field input { min-width: 0; width: 100%; padding: 0; outline: 0; border: 0; background: var(--cp-surface); color: var(--cp-text); font-size: 12px; }
+    .scenario-list { display: grid; gap: 4px; }
+    .scenario-option { display: grid; grid-template-columns: 24px minmax(0, 1fr) 25px; align-items: center; gap: 10px; width: 100%; min-height: 61px; padding: 10px; border: 0; border-left: 3px solid var(--cp-bg-elevated); border-radius: 0 6px 6px 0; background: var(--cp-bg-elevated); color: var(--cp-text-muted); text-align: left; }
+    .scenario-option:hover { background: var(--cp-surface-soft); }
+    .scenario-option[aria-pressed="true"] { border-left-color: var(--cp-accent); background: var(--cp-accent-soft); color: var(--cp-accent); }
+    .scenario-title { display: block; font-size: 12px; line-height: 1.4; font-weight: 650; color: var(--cp-text); }
+    .scenario-subtitle { display: block; font-size: 10px; color: var(--cp-text-soft); margin-top: 3px; }
+    .scenario-progress { font: 10px Consolas, "Courier New", monospace; color: var(--cp-text-soft); }
+    .impact-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; font-size: 12px; line-height: 1.4; font-weight: 600; color: var(--cp-text); }
+    .impact-badge span { min-width: 0; overflow-wrap: anywhere; }
+    .impact-badge[data-tone="risk"] svg { color: var(--cp-danger); }
+    .impact-badge[data-tone="warning"] svg { color: var(--cp-warning); }
+    .impact-badge[data-tone="neutral"] svg { color: var(--cp-text-soft); }
+    .scenario-option .impact-badge { display: flex; margin-top: 5px; font-size: 10px; }
+    .impact-legend { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-bottom: 20px; }
+    .table-wrapper .impact-badge { margin-top: 8px; }
+    .sidebar-note { border-top: 1px solid var(--cp-border); margin: 24px 10px 0; padding-top: 16px; font-size: 11px; color: var(--cp-text-soft); }
+    .sidebar-note strong { color: var(--cp-text-muted); display: block; margin-bottom: 4px; }
+    .empty-search { padding: 16px 10px; font-size: 12px; color: var(--cp-text-soft); }
+    .workspace { min-width: 0; }
+    .scenario-header { padding: 26px 28px 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--cp-border); }
+    .scenario-header h2 { font-size: 29px; margin: 6px 0 8px; }
+    .scenario-header p { max-width: 760px; color: var(--cp-text-muted); font-size: 13px; }
+    .scenario-header .eyebrow { color: var(--cp-accent); }
+    .scenario-header > div:first-child { min-width: 0; }
+    .scenario-impact { display: grid; gap: 6px; margin-top: 14px; }
+    .scenario-header .impact-note { font-size: 11px; color: var(--cp-text-soft); }
+    .scenario-header-actions { display: flex; gap: 8px; padding-top: 8px; }
+    .mobile-picker { display: none; padding: 16px 20px 0; }
+    .mobile-picker label { display: block; font-size: 11px; color: var(--cp-text-soft); margin-bottom: 6px; }
+    .mobile-picker select { width: 100%; padding: 10px; border: 1px solid var(--cp-border); border-radius: 6px; background: var(--cp-surface); color: var(--cp-text); }
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 258px; }
+    .runbook-column { min-width: 0; padding: 0 28px 28px; }
+    .stage-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-bottom: 1px solid var(--cp-border); margin-bottom: 27px; }
+    .stage-tab { min-width: 0; min-height: 75px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px; border: 0; border-bottom: 3px solid var(--cp-surface); color: var(--cp-text-soft); background: var(--cp-surface); font-size: 11px; font-weight: 600; }
+    .stage-number { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--cp-border); border-radius: 50%; font-size: 10px; }
+    .stage-tab[aria-selected="true"] { color: var(--cp-accent); border-bottom-color: var(--cp-accent); }
+    .stage-tab[aria-selected="true"] .stage-number { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+    .stage-tab.is-checked .stage-number { color: var(--cp-success); border-color: var(--cp-success); background: var(--cp-surface); }
+    .stage-panel { min-height: 350px; animation: reveal 160ms ease-out; }
+    .stage-title-line { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; color: var(--cp-accent); }
+    .stage-panel h3 { font-size: 21px; line-height: 1.3; color: var(--cp-text); }
+    .stage-description { color: var(--cp-text-muted); margin-bottom: 22px; max-width: 820px; font-size: 13px; }
+    .callout { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0 12px 14px; border-left: 3px solid var(--cp-warning); background: var(--cp-bg-elevated); margin: 16px 0; font-size: 12px; color: var(--cp-text-muted); }
+    .callout > svg { color: var(--cp-warning); margin-top: 2px; }
+    .callout.danger { border-color: var(--cp-danger); }
+    .callout.danger > svg { color: var(--cp-danger); }
+    .command-block { border: 1px solid var(--cp-border); border-radius: 8px; overflow: hidden; margin: 16px 0; background: var(--cp-surface-soft); }
+    .command-top { padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 43px; border-bottom: 1px solid var(--cp-border); color: var(--cp-text-muted); font-size: 11px; }
+    .command-top .inline { min-width: 0; }
+    .command-top .icon-button { width: 28px; height: 28px; background: var(--cp-surface-soft); border-color: var(--cp-surface-soft); }
+    .command-top .icon-button:hover { border-color: var(--cp-border); }
+    .command-block pre { margin: 0; padding: 16px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; color: var(--cp-text); tab-size: 2; }
+    .command-block pre code { font-size: inherit; }
+    .command-caption { font-size: 11px; color: var(--cp-text-soft); margin-top: -6px; margin-bottom: 16px; }
+    .evidence-list { padding-left: 20px; margin: 12px 0 20px; color: var(--cp-text-muted); font-size: 13px; }
+    .evidence-list li { padding: 4px 0; }
+    .prompt-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--cp-border); margin: 20px 0 16px; }
+    .prompt-tab { padding: 9px 10px; background: var(--cp-surface); border: 0; border-bottom: 2px solid var(--cp-surface); color: var(--cp-text-muted); font-size: 12px; }
+    .prompt-tab[aria-selected="true"] { color: var(--cp-accent); border-color: var(--cp-accent); font-weight: 650; }
+    .prompt-block { border-left: 3px solid var(--cp-accent); padding: 14px 16px; background: var(--cp-accent-soft); font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+    .prompt-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .recovery-proof { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--cp-border); }
+    .recovery-proof .eyebrow { margin-bottom: 10px; }
+    .stage-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--cp-border); }
+    .checkpoint { display: flex; align-items: flex-start; gap: 9px; font-size: 12px; color: var(--cp-text); cursor: pointer; }
+    input[type="checkbox"] { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--cp-accent); flex-shrink: 0; }
+    .checkpoint small { display: block; font-size: 10px; color: var(--cp-text-soft); margin-top: 3px; }
+    .brief { border-left: 1px solid var(--cp-border); padding: 26px 22px; background: var(--cp-bg-elevated); min-width: 0; }
+    .brief-section + .brief-section { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--cp-border); }
+    .brief h3 { margin-bottom: 12px; font-size: 12px; }
+    .brief-target { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 10px; overflow-wrap: anywhere; }
+    .brief-target code { min-width: 0; }
+    .brief p { color: var(--cp-text-muted); font-size: 12px; }
+    .signal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .signal-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: var(--cp-text-muted); }
+    .signal-list svg { color: var(--cp-accent); margin-top: 3px; }
+    .checklist { display: grid; gap: 10px; }
+    .mini-checkpoint { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+    .mini-checkpoint input { margin-top: 0; }
+    .notes-label { display: block; font-size: 12px; font-weight: 650; margin-bottom: 10px; }
+    .notes { width: 100%; min-height: 120px; resize: vertical; border: 1px solid var(--cp-border); border-radius: 6px; padding: 10px; font-size: 12px; line-height: 1.6; background: var(--cp-surface); color: var(--cp-text); }
+    .notes-meta { font-size: 10px; margin-top: 6px; color: var(--cp-text-soft); }
+    .runner { border-top: 1px solid var(--cp-border); margin-top: 26px; padding-top: 16px; font-size: 12px; }
+    .runner summary { cursor: pointer; color: var(--cp-text-muted); font-weight: 600; }
+    .runner p { color: var(--cp-text-muted); margin: 12px 0; }
+    .page-section { padding: 30px 36px 44px; max-width: 1500px; margin: 0 auto; }
+    .page-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+    .page-title h2 { margin: 6px 0 10px; }
+    .page-title p { color: var(--cp-text-muted); max-width: 790px; font-size: 13px; }
+    .table-wrapper { border-top: 1px solid var(--cp-border); border-bottom: 1px solid var(--cp-border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background: var(--cp-surface-soft); font-size: 11px; color: var(--cp-text-soft); font-weight: 600; padding: 12px 16px; }
+    td { border-top: 1px solid var(--cp-border); padding: 16px; vertical-align: top; overflow-wrap: anywhere; }
+    td:first-child { min-width: 170px; }
+    td:last-child { width: 60px; }
+    td strong { display: block; font-size: 13px; margin-bottom: 4px; }
+    td code { color: var(--cp-text-muted); font-size: 11px; }
+    .cleanup-label { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
+    .cleanup-label.extra { color: var(--cp-accent); }
+    .table-subtext { display: block; font-size: 11px; margin-top: 5px; color: var(--cp-text-soft); }
+    .lab-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 50px; row-gap: 32px; }
+    .lab-section { border-top: 1px solid var(--cp-border); padding-top: 24px; min-width: 0; }
+    .lab-section h3 { font-size: 18px; margin-bottom: 16px; }
+    .lab-section p { color: var(--cp-text-muted); font-size: 13px; margin-bottom: 12px; }
+    .lab-section.wide { grid-column: 1 / -1; }
+    .profile { margin: 0; }
+    .profile-row { display: grid; grid-template-columns: 125px minmax(0, 1fr); gap: 12px; padding: 8px 0; font-size: 12px; }
+    .profile dt { color: var(--cp-text-soft); }
+    .profile dd { margin: 0; overflow-wrap: anywhere; }
+    .resource-links { display: grid; gap: 0; }
+    .resource-link { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 12px 0; border-bottom: 1px solid var(--cp-border); text-decoration: none; }
+    .resource-link strong { color: var(--cp-text); display: block; font-size: 13px; }
+    .resource-link small { display: block; color: var(--cp-text-soft); font-size: 11px; margin-top: 3px; overflow-wrap: anywhere; }
+    .resource-link:hover strong { color: var(--cp-link); }
+    .source-links { display: flex; flex-wrap: wrap; gap: 12px 22px; font-size: 12px; }
+    .footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--cp-border); padding: 12px 28px; background: var(--cp-surface-soft); color: var(--cp-text-soft); font-size: 10px; }
+    .footer .inline { gap: 6px; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; border: 1px solid var(--cp-border); border-radius: 6px; background: var(--cp-text); color: var(--cp-surface); box-shadow: var(--cp-shadow); z-index: 40; font-size: 12px; text-align: center; }
+    dialog { width: min(520px, calc(100% - 32px)); padding: 26px; border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface); color: var(--cp-text); box-shadow: var(--cp-shadow); }
+    dialog::backdrop { background: var(--cp-overlay); }
+    dialog h2 { font-size: 20px; margin-bottom: 12px; }
+    dialog p { color: var(--cp-text-muted); font-size: 13px; margin-bottom: 20px; }
+    dialog .actions { justify-content: flex-end; }
+    dialog textarea { width: 100%; min-height: 180px; padding: 12px; margin-bottom: 16px; background: var(--cp-surface-soft); color: var(--cp-text); border: 1px solid var(--cp-border); font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+    .print-only { display: none; }
+    body.focus-mode .scenario-sidebar, body.focus-mode .brief, body.focus-mode .environment-strip, body.focus-mode .snapshot-label { display: none; }
+    body.focus-mode .desk, body.focus-mode .main-grid { grid-template-columns: minmax(0, 1fr); }
+    body.focus-mode .workspace { max-width: 1100px; width: 100%; margin: 0 auto; }
+    body.focus-mode .mobile-picker { display: block; }
+    body.focus-mode .command-block pre { font-size: 14px; }
+    @keyframes reveal { from { opacity: .55; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @media (min-width: 1650px) { .main-grid { grid-template-columns: minmax(0, 1fr) 310px; } .brief { padding: 28px; } .runbook-column { padding-right: 38px; padding-left: 38px; } .command-block pre { font-size: 13px; } }
+    @media (max-width: 1220px) { .main-grid { grid-template-columns: minmax(0, 1fr); } .brief { border-left: 0; border-top: 1px solid var(--cp-border); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; } .brief-section + .brief-section { margin-top: 0; padding-top: 0; border-top: 0; } .snapshot-label { display: none; } }
+    @media (max-width: 850px) { .desk { grid-template-columns: minmax(0, 1fr); } .scenario-sidebar { display: none; } .mobile-picker { display: block; } .topbar { padding: 16px 20px; flex-wrap: wrap; } .toolbar { justify-content: flex-start; } .environment-strip { padding: 12px 20px; gap: 8px 20px; } .review-label { margin-left: 0; } .global-nav { padding: 0 20px; gap: 20px; } .scenario-header { padding: 22px 20px; } .runbook-column { padding: 0 20px 24px; } .page-section { padding: 24px 20px; } .lab-grid { grid-template-columns: minmax(0, 1fr); } .brief { padding: 24px 20px; } }
+    @media (max-width: 540px) { .topbar { gap: 16px; } h1 { font-size: 23px; } .brand-mark { width: 40px; height: 40px; } .toolbar { width: 100%; justify-content: space-between; gap: 8px; } .toolbar-tools { padding-left: 10px; gap: 5px; } .toolbar-links .link-button { padding: 7px 9px; font-size: 12px; } .toolbar .icon-button { width: 32px; height: 32px; } .global-nav { justify-content: space-between; gap: 8px; } .global-tab { font-size: 12px; gap: 6px; } .global-tab svg { width: 15px; } .environment-item { flex-wrap: wrap; gap: 3px 8px; } .environment-item.group-item { width: 100%; } .scenario-header { gap: 10px; } .scenario-header h2 { font-size: 24px; } .scenario-header-actions { flex-direction: column; padding-top: 5px; } .stage-tab { font-size: 10px; min-height: 70px; } .stage-panel h3 { font-size: 20px; } .command-block pre { font-size: 11px; padding: 12px; } .stage-footer { align-items: flex-start; flex-direction: column; } .stage-footer .actions { width: 100%; justify-content: flex-end; } .brief { grid-template-columns: minmax(0, 1fr); } .brief-section + .brief-section { border-top: 1px solid var(--cp-border); padding-top: 20px; } .page-title { flex-direction: column; } table, tbody { display: block; } thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } tr { display: grid; grid-template-columns: minmax(0, 1fr) 48px; border-top: 1px solid var(--cp-border); padding: 16px 0; } td { padding: 5px 0; border: 0; grid-column: 1; } td:first-child { min-width: 0; } td:last-child { grid-column: 2; grid-row: 1 / 4; width: auto; text-align: right; } td[data-label]::before { content: attr(data-label) " / "; font-size: 11px; color: var(--cp-text-soft); } .profile-row { grid-template-columns: 105px minmax(0, 1fr); } .footer { padding: 12px 20px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; } }
+    @media print { @page { margin: 14mm; } body { background: var(--cp-surface); } body > :not(.print-only) { display: none !important; } .print-only { display: block; font-size: 11px; } .print-only h1 { font-size: 24px; margin-bottom: 8px; } .print-only h2 { font-size: 17px; margin-top: 24px; margin-bottom: 8px; } .print-only h3 { font-size: 12px; margin: 12px 0 6px; } .print-only p { margin: 7px 0; } .print-only pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 9px; line-height: 1.5; border: 1px solid var(--cp-border); padding: 9px; break-inside: avoid; } .print-only section { break-inside: auto; } .print-only h2, .print-only h3 { break-after: avoid; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to runbook</a>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" data-icon="terminal" aria-hidden="true"></div>
+      <div><h1>SRE Demo Desk</h1><p class="brand-subtitle">AKS Store Demo / Sweden Central</p></div>
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-links">
+        <a id="agent-link" class="link-button primary" target="_blank" rel="noopener noreferrer"><span data-icon="message-square" aria-hidden="true"></span>SRE Agent<span data-icon="arrow-up-right" aria-hidden="true"></span></a>
+        <a id="store-link" class="link-button" target="_blank" rel="noopener noreferrer">Store<span data-icon="arrow-up-right" aria-hidden="true"></span></a>
+      </div>
+      <div class="toolbar-tools">
+        <button id="theme-button" class="icon-button" type="button" aria-label="Switch color theme" title="Switch color theme"><span data-icon="moon" aria-hidden="true"></span></button>
+        <button id="focus-button" class="icon-button" type="button" aria-label="Focus mode" aria-pressed="false" title="Focus mode"><span data-icon="maximize-2" aria-hidden="true"></span></button>
+        <button id="print-button" class="icon-button" type="button" aria-label="Print selected scenario" title="Print selected scenario"><span data-icon="printer" aria-hidden="true"></span></button>
+      </div>
+    </div>
+  </header>
+  <div class="environment-strip" aria-label="Deployment reference">
+    <div class="environment-item"><span>Cluster</span><strong class="mono">aks-srelab</strong></div>
+    <div class="environment-item"><span>Namespace</span><strong class="mono">pets</strong></div>
+    <div class="environment-item group-item"><span>Resource group</span><strong>Az-SRE-Agent-Demo-MAT-RG</strong></div>
+    <div class="review-label"><span data-icon="shield-check" aria-hidden="true"></span>Review mode</div>
+  </div>
+  <nav class="global-nav" role="tablist" aria-label="Demo views">
+    <button id="view-runbook" class="global-tab" role="tab" aria-selected="true" aria-controls="runbook-view" data-view="runbook"><span data-icon="book-open" aria-hidden="true"></span>Runbook</button>
+    <button id="view-catalog" class="global-tab" role="tab" aria-selected="false" aria-controls="catalog-view" tabindex="-1" data-view="catalog"><span data-icon="list" aria-hidden="true"></span>All scenarios</button>
+    <button id="view-lab" class="global-tab" role="tab" aria-selected="false" aria-controls="lab-view" tabindex="-1" data-view="lab"><span data-icon="server" aria-hidden="true"></span>Lab &amp; recovery</button>
+    <span class="snapshot-label">Deployment reference / 13 Sep 2026</span>
+  </nav>
+  <main id="main-content" tabindex="-1">
+    <section id="runbook-view" role="tabpanel" aria-labelledby="view-runbook">
+      <div class="desk">
+        <aside class="scenario-sidebar" aria-label="Scenario selection">
+          <div class="sidebar-heading"><span class="eyebrow">Scenario library</span><span class="count-badge">10 SCENARIOS</span></div>
+          <label class="search-field"><span data-icon="search" aria-hidden="true"></span><span class="sr-only">Search scenarios</span><input id="scenario-search" type="search" placeholder="Find a scenario" autocomplete="off"></label>
+          <div id="scenario-list" class="scenario-list"></div>
+          <p id="empty-search" class="empty-search" hidden>No matching scenarios.</p>
+          <div class="sidebar-note"><strong>One fault at a time.</strong>Restore and verify before changing scenarios. Keep node counts and VM sizes fixed.</div>
+        </aside>
+        <div class="workspace">
+          <div class="mobile-picker"><label for="scenario-select">SELECTED SCENARIO</label><select id="scenario-select"></select></div>
+          <div class="scenario-header">
+            <div><p class="eyebrow" id="scenario-kicker"></p><h2 id="scenario-heading"></h2><p id="scenario-summary"></p><div id="scenario-impact" class="scenario-impact" aria-label="Expected browser impact"></div></div>
+            <div class="scenario-header-actions">
+              <button id="download-button" class="icon-button" type="button" aria-label="Download selected runbook as Markdown" title="Download selected runbook"><span data-icon="download" aria-hidden="true"></span></button>
+              <button id="reset-button" class="icon-button" type="button" aria-label="Reset selected scenario checkpoints and notes" title="Reset checkpoints and notes"><span data-icon="rotate-ccw" aria-hidden="true"></span></button>
+            </div>
+          </div>
+          <div class="main-grid">
+            <div class="runbook-column">
+              <div id="stage-tabs" class="stage-tabs" role="tablist" aria-label="Demo stages"></div>
+              <section id="stage-panel" class="stage-panel" role="tabpanel"></section>
+              <div class="stage-footer">
+                <label class="checkpoint"><input id="current-checkpoint" type="checkbox"><span><span id="checkpoint-label"></span><small>Presenter checkoff, not live telemetry</small></span></label>
+                <div class="actions"><button id="previous-stage" class="icon-button" type="button" aria-label="Previous stage" title="Previous stage"><span data-icon="chevron-left" aria-hidden="true"></span></button><button id="next-stage" class="command-button primary" type="button"></button></div>
+              </div>
+              <details class="runner" id="runner-details"><summary>Automatic runner / not a live investigation</summary><div id="runner-content"></div></details>
+            </div>
+            <aside class="brief" aria-label="Scenario evidence and presenter notes">
+              <section class="brief-section"><p class="eyebrow">Fault target</p><div id="brief-target" class="brief-target"></div><p id="brief-impact" style="margin-top:12px"></p></section>
+              <section class="brief-section"><h3>Expected evidence</h3><ul id="expected-signals" class="signal-list"></ul></section>
+              <section class="brief-section"><h3>Presenter checkpoints <span id="checklist-count" class="count-badge"></span></h3><div id="checkpoint-list" class="checklist"></div></section>
+              <section class="brief-section"><label class="notes-label" for="presenter-notes">Presenter notes</label><textarea id="presenter-notes" class="notes" maxlength="4000" placeholder="Evidence, findings, follow-up..."></textarea><div id="notes-meta" class="notes-meta">Stored in this browser only</div></section>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="catalog-view" class="page-section" role="tabpanel" aria-labelledby="view-catalog" hidden>
+      <div class="page-title"><div><p class="eyebrow">Ten controlled failures</p><h2>Choose the investigation</h2><p>Expected browser effects, not live status. No test deliberately stops both website frontends. Healthy replicas can mask a failure; confirm the actual effect in Observe.</p></div></div>
+      <div id="impact-legend" class="impact-legend" aria-label="Expected browser impact key"></div>
+      <div class="table-wrapper"><table><thead><tr><th scope="col">Scenario / identifier</th><th scope="col">Fault &amp; target</th><th scope="col">Recovery</th><th scope="col"><span class="sr-only">Open runbook</span></th></tr></thead><tbody id="catalog-body"></tbody></table></div>
+      <div class="callout"><span data-icon="triangle-alert" aria-hidden="true"></span><p>Reapplying the baseline does not delete scenario-only workloads or NetworkPolicies. Use the selected scenario's Restore stage. Never delete a replacement scenario manifest to restore an existing service.</p></div>
+    </section>
+    <section id="lab-view" class="page-section" role="tabpanel" aria-labelledby="view-lab" hidden>
+      <div class="page-title"><div><p class="eyebrow">Deployment reference</p><h2>The Sweden Central lab</h2><p>Configuration verified on 13 Sep 2026. This offline runbook does not query Azure or execute commands. Check current health in your terminal before each demo.</p></div></div>
+      <div class="lab-grid">
+        <section class="lab-section"><h3>Scope &amp; cost controls</h3><dl id="lab-profile" class="profile"></dl></section>
+        <section class="lab-section"><h3>Open the deployed lab</h3><div id="resource-links" class="resource-links"></div><div class="callout"><span data-icon="shield-check" aria-hidden="true"></span><p>The two store endpoints are HTTP demo sites, without production authentication. Use test data only.</p></div></section>
+        <section class="lab-section"><h3>Observability &amp; agent behavior</h3><p>Container Insights, Log Analytics, Application Insights, four one-minute log alert rules, and the Azure Monitor connector are configured. Grafana and managed Prometheus were omitted.</p><p>Allow several minutes for telemetry and alert evaluation. Not every scenario necessarily triggers a configured rule. Check Azure Monitor Alerts and the agent's Incidents separately; a runner report does not prove that either stage occurred.</p><p>The response plan routes matching high-priority Pet Store alerts to <code>incident-handler</code> in Review mode. <code>cluster-health-monitor</code> provides health checks. Review proposed write actions before approval.</p><p>Outlook authorization is optional for email delivery. GitHub source-code analysis and Microsoft Learn MCP are not configured.</p><div id="telemetry-commands"></div></section>
+        <section class="lab-section"><h3>Presenter guardrails</h3><ul class="evidence-list"><li>Prepare, inject one fault, collect fresh evidence, investigate, restore, verify.</li><li>Keep the two node pools fixed. Pending Pods is intentionally unschedulable.</li><li>Run CPU stress briefly. Stop the scenario after collecting enough evidence.</li><li>Compare event times with this injection; old restart counts are not proof of a new fault.</li><li>A green pod does not prove that checkout, networking, or order processing works.</li><li>The runner uses the current kubectl context before validation. ResourceGroupName alone does not select the cluster.</li><li>Repo shortcuts such as break-oom and fix-all assume the dev-container shell setup; these runbooks use explicit PowerShell commands.</li></ul><h3>Costs while the lab exists</h3><p>VMs plus the SRE Agent baseline are approximately USD 493.48 per 730-hour month, before disks, networking, ACR, logs, alerts, and active agent usage. This is not a spending cap.</p><p>Stopping AKS does not stop SRE Agent or all retained-resource charges. Stop/start and full lab teardown instructions remain in the cost guide. Recovery below does not delete Azure infrastructure or MongoDB storage.</p><div class="source-links"><a href="COSTS.md">Cost and shutdown guide</a><a href="https://azure.microsoft.com/en-us/pricing/details/sre-agent/" target="_blank" rel="noopener noreferrer">SRE Agent pricing</a></div></section>
+        <section class="lab-section wide"><h3>Full scenario recovery</h3><p>For this lab only: remove the four scenario-only deployments and the blocking NetworkPolicy, reapply the healthy baseline, and wait for recovery. Do not run concurrently with an intentional investigation.</p><div id="full-recovery"></div></section>
+        <section class="lab-section wide"><h3>Source guides</h3><div class="source-links"><a href="BREAKABLE-SCENARIOS.md">Breakable scenarios</a><a href="PROMPTS-GUIDE.md">SRE Agent prompts</a><a href="SRE-AGENT-SETUP.md">Agent setup</a><a href="https://github.com/matthansen0/azure-sre-agent-sandbox" target="_blank" rel="noopener noreferrer">Upstream repository</a><a href="https://lucide.dev" target="_blank" rel="noopener noreferrer">Lucide icons</a></div></section>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><span class="inline"><span data-icon="book-open" aria-hidden="true"></span>Offline runbook / no live connection</span><span>Commands are copied, never executed. Checkpoints are presenter-entered.</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="reset-dialog" aria-labelledby="reset-title"><h2 id="reset-title">Reset presenter notes?</h2><p id="reset-description"></p><div class="actions"><button class="command-button" id="cancel-reset" type="button">Cancel</button><button class="command-button primary" id="confirm-reset" type="button">Reset checkpoints &amp; notes</button></div></dialog>
+  <dialog id="clipboard-dialog" aria-labelledby="clipboard-title"><h2 id="clipboard-title">Clipboard access unavailable</h2><textarea id="clipboard-text" readonly aria-label="Text to copy"></textarea><div class="actions"><button class="command-button" id="close-clipboard" type="button">Close</button></div></dialog>
+  <article id="print-runbook" class="print-only"></article>
+  <noscript><p style="padding:24px">JavaScript is required for the scenario selector. The complete written runbook is available in <a href="BREAKABLE-SCENARIOS.md">Breakable Scenarios</a>.</p></noscript>
+  <script id="lucide-notice" type="text/plain">
+    Lucide 0.468.0 - ISC License
+    Copyright (c) for portions of Lucide are held by Cole Bemis
+    2013-2022 as part of Feather (MIT). All other copyright (c) for Lucide are held by
+    Lucide Contributors 2022.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted, provided that the above
+    copyright notice and this permission notice appear in all copies.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  </script>
+  <script id="demo-data" type="application/json">
+  {
+    "environment": {
+      "region": "Sweden Central", "subscriptionName": "Connectivity Hub - Production", "subscriptionId": "b28cc86b-8f84-47e5-a38a-b814b44d047e",
+      "resourceGroup": "Az-SRE-Agent-Demo-MAT-RG", "nodeGroup": "Az-SRE-Agent-Demo-MAT-RG-nodes", "cluster": "aks-srelab", "namespace": "pets", "agent": "sre-srelab",
+      "repoPath": "C:\\Zahir_Repository\\SRE-Demo-Lab-MAT-MS\\azure-sre-agent-sandbox",
+      "apiHost": "aks-srelab-tuu2g03m.hcp.swedencentral.azmk8s.io",
+      "storeUrl": "http://172.160.84.220", "adminUrl": "http://172.160.85.198",
+      "agentUrl": "https://portal.azure.com/#view/Microsoft_Azure_PaasServerless/AgentFrameBlade.ReactView/id/%2Fsubscriptions%2Fb28cc86b-8f84-47e5-a38a-b814b44d047e%2FresourceGroups%2FAz-SRE-Agent-Demo-MAT-RG%2Fproviders%2FMicrosoft.App%2Fagents%2Fsre-srelab"
+    },
+    "scenarios": [
+      {
+        "id": "oom-killed", "title": "Out of memory", "category": "Memory", "target": "order-service", "kind": "Deployment", "icon": "cpu", "sequence": "01", "suggested": "Recommended first demo",
+        "browserImpact": "checkout",
+        "summary": "A tiny memory limit turns checkout into a restart investigation.", "mechanism": "The scenario replaces order-service with a 16Mi memory limit. Its containers may be terminated as they exceed that limit.", "impact": "Orders may fail while the order-service replicas restart.",
+        "signals": ["Fresh OOMKilled termination or memory-related failure", "A 16Mi memory limit on order-service", "Restart counts increase after injection"],
+        "watch": "get pods -n pets -l app=order-service -w",
+        "confirmation": {"title":"Container memory limit is too small","cause":"order-service is configured with an 8Mi memory request and a 16Mi limit. Its Node.js process can exceed the container limit and be killed, causing repeated restarts.","proof":"The affected pod has a 16Mi limit AND a fresh OOMKilled termination after injection. Exit code 137 and rising restart counts support this; neither alone proves an OOM. A different termination reason needs a different diagnosis.","impact":"New checkouts may fail while replicas restart; a surviving ready replica can still accept orders. The storefront homepage can remain available. Check POST /api/orders, not just homepage HTTP 200."},
+        "observe": [
+          {"title":"1. Configured memory request and limit","args":"get deployment order-service -n pets -o custom-columns='DEPLOYMENT:.metadata.name,REQUEST:.spec.template.spec.containers[*].resources.requests.memory,LIMIT:.spec.template.spec.containers[*].resources.limits.memory' --request-timeout=20s","caption":"Expected fault setting: REQUEST = 8Mi and LIMIT = 16Mi. This shows the configuration, not proof that a kill occurred."},
+          {"title":"2. Actual termination reason and time","args":"describe pods -n pets -l app=order-service --request-timeout=20s","caption":"Look under the affected container's State / Last State: Reason = OOMKilled, usually Exit Code = 137. Compare Finished time with injection time and confirm Limits > memory = 16Mi on that same pod. Old OOM events do not prove this run failed."},
+          {"title":"3. Previous container logs / supporting evidence","args":"logs -n pets -l app=order-service --previous --since=10m --tail=60 --timestamps=true --prefix=true --request-timeout=20s","caption":"An OOM kill may leave no final log message. Logs unavailable before the first restart are not proof of a failure. JavaScript heap errors or another exit reason must be distinguished from a container OOMKilled event."}
+        ],
+        "question": "Something seems wrong with checkout. Why is order-service restarting?",
+        "evidenceQuestion": "Inspect recent termination reasons, exit codes, memory requests and limits, events, and previous container logs for order-service. Distinguish OOMKilled from an application crash and correlate the evidence with this injection.",
+        "remediationQuestion": "Propose the smallest order-service memory configuration change that addresses the observed failure. Explain why a restart alone is insufficient. Present the proposed change for approval before applying it.",
+        "cleanup": {"mode":"baseline","waitFor":["order-service"]}, "verify": ["get pods -n pets -l app=order-service"],
+        "warning": "Old restart counts do not establish a new OOM failure. Look at the last termination reason and timestamps. Previous logs may be unavailable before the first restart."
+      },
+      {
+        "id": "crash-loop", "title": "Startup crash", "category": "Application", "target": "product-service", "kind": "Deployment", "icon": "activity", "sequence": "02", "suggested": "Startup diagnosis",
+        "browserImpact": "catalog",
+        "summary": "An invalid startup command takes the product catalog offline.", "mechanism": "The scenario overrides product-service startup with a failing command, causing repeated exits and backoff.", "impact": "The storefront may fail to load its product catalog.",
+        "signals": ["Fresh Error or CrashLoopBackOff state", "Nonzero container exit code", "Startup command differs from the healthy baseline"], "watch":"get pods -n pets -l app=product-service -w",
+        "confirmation":{"title":"Startup command deliberately exits","cause":"product-service starts /bin/sh with an argument that prints 'Starting with invalid config...' and runs exit 1. The application never stays running; Kubernetes retries it with backoff.","proof":"The current command contains exit 1 AND a newly created container exits with code 1. Its previous logs show the startup message; Error or CrashLoopBackOff and fresh restart times corroborate it.","impact":"Hard-refresh the storefront to trigger GET /api/products. If no healthy product replicas remain, expect 'Error occurred while fetching products' or an empty catalog. Already loaded products can be cached in the page; a remaining healthy replica can mask the outage."},
+        "observe":[
+          {"title":"1. Faulty startup command","args":"get deployment product-service -n pets -o custom-columns='DEPLOYMENT:.metadata.name,COMMAND:.spec.template.spec.containers[*].command,ARGS:.spec.template.spec.containers[*].args' --request-timeout=20s","caption":"Expected: COMMAND includes /bin/sh and ARGS includes the startup message followed by exit 1. Repeated restarts cannot fix this command."},
+          {"title":"2. Container exit evidence","args":"describe pods -n pets -l app=product-service --request-timeout=20s","caption":"Expected on new affected pods: a terminated container with Reason = Error and Exit Code = 1, followed by CrashLoopBackOff after retries. Check the termination time, not an old restart total."},
+          {"title":"3. Previous startup log","args":"logs -n pets -l app=product-service --previous --since=10m --tail=60 --timestamps=true --prefix=true --request-timeout=20s","caption":"Expected message: Starting with invalid config... . Match the pod and timestamp to the failing command. Before the first restart, previous logs may not exist."}
+        ],
+        "question":"My product catalog is not loading. Why is product-service crashing?", "evidenceQuestion":"Inspect product-service's exit code, current command and arguments, recent events, and previous container logs. Identify the configuration that causes startup to fail.", "remediationQuestion":"Propose restoring the correct startup command for product-service. Explain why repeatedly restarting a pod will not repair its invalid command. Obtain approval before making a change.",
+        "cleanup":{"mode":"baseline","waitFor":["product-service"]},"verify":["get pods -n pets -l app=product-service"],"warning":"A restart is not a root-cause fix for a broken startup command. Restore the healthy specification."
+      },
+      {
+        "id":"image-pull-backoff","title":"Image pull failure","category":"Registry","target":"makeline-service","kind":"Deployment","icon":"download","sequence":"03","suggested":"Image and event analysis",
+        "browserImpact":"orders",
+        "summary":"A nonexistent image tag prevents the fulfillment service from starting.","mechanism":"The scenario changes the makeline-service image reference to a tag that cannot be pulled.","impact":"Order fulfillment can stop while the deployment is unavailable.","signals":["ErrImagePull or ImagePullBackOff","Failed pull events identify the image tag","The image reference differs from the baseline"],"watch":"get pods -n pets -l app=makeline-service -w",
+        "confirmation":{"title":"The configured image tag does not exist","cause":"makeline-service requests ghcr.io/azure-samples/aks-store-demo/makeline-service:nonexistent-tag-v999. The registry cannot supply that tag, so the affected container cannot start.","proof":"The new pod uses nonexistent-tag-v999 AND its fresh pull events report that reference as not found or manifest unknown. ErrImagePull / ImagePullBackOff alone is insufficient: authentication or network errors indicate a different problem.","impact":"New makeline replicas stay unavailable. The storefront and order acceptance may still work; fulfillment or admin operations can fail if no healthy makeline replica remains. A failed replacement pod does not automatically mean a total service outage."},
+        "observe":[
+          {"title":"1. Exact image reference","args":"get deployment makeline-service -n pets -o jsonpath='{.spec.template.spec.containers[*].image}' --request-timeout=20s","caption":"Expected fault tag: nonexistent-tag-v999. Compare the image in the failing pod's description too; old healthy replicas may still use a different image."},
+          {"title":"2. Why the registry pull failed","args":"describe pods -n pets -l app=makeline-service --request-timeout=20s","caption":"Expected on affected pods: ErrImagePull or ImagePullBackOff and a Failed event naming the nonexistent image. Confirm not found / manifest unknown rather than unauthorized, DNS failure, or a timeout. No application logs exist for a container that never started."},
+          {"title":"3. Fresh event timestamps","args":"get events -n pets --sort-by=.lastTimestamp --request-timeout=20s","caption":"Find the affected makeline pod's new Failed / BackOff events after injection. Ignore unrelated pods and earlier demo failures."}
+        ],
+        "question":"Why will the makeline-service pods not start?","evidenceQuestion":"Inspect the exact makeline-service image reference and recent image-pull events. Distinguish a nonexistent tag from authentication, network, or registry availability issues.","remediationQuestion":"Propose the known-good image reference from the healthy deployment. Request approval before changing the deployment; do not modify registry permissions without evidence.","cleanup":{"mode":"baseline","waitFor":["makeline-service"]},"verify":["get pods -n pets -l app=makeline-service"],"warning":"Container logs may not exist because the image never started. Pod events are the primary evidence."
+      },
+      {
+        "id":"high-cpu","title":"CPU contention","category":"Performance","target":"cpu-stress-test","kind":"Deployment","icon":"cpu","sequence":"04","suggested":"Keep this run brief",
+        "browserImpact":"latency",
+        "summary":"Two synthetic workloads compete for the small workload node's CPU.","mechanism":"The scenario creates two cpu-stress-test replicas on the workload pool, each with a 100m CPU request and a 2000m CPU limit.","impact":"Application latency can rise as synthetic work competes with the store.","signals":["cpu-stress-test appears in pod metrics","Increased workload-node CPU usage","Possible contention without any pod crash"],"watch":"get pods -n pets -l app=cpu-stress-test -w",
+        "confirmation":{"title":"Synthetic workloads consume shared CPU","cause":"Two cpu-stress-test pods run a busy shell loop on the workload pool. Each requests 100m CPU but is allowed up to 2000m; that limit permits consumption, it does not prove usage.","proof":"Fresh metrics show cpu-stress-test using substantial CPU and the workload node busier than before injection. Claim application slowdown only if repeated request timings also worsen. Running pods or configured limits alone are not performance evidence.","impact":"The store may become slower, not offline, and pods may stay Ready. Compare the same browser request's timing before and during the test. Without a measured latency change, demonstrate resource load only, not an application outage."},
+        "observe":[
+          {"title":"1. Which pods actually consume CPU","args":"top pods -n pets --sort-by=cpu --request-timeout=20s","caption":"Look for cpu-stress-test near the top and compare its usage with the store pods and your baseline. 1000m = one CPU core. Missing or stale metrics cannot confirm high CPU; do not assume the stress command is effective."},
+          {"title":"2. Shared node pressure","args":"top nodes --request-timeout=20s","caption":"Compare workload-node CPU usage with before injection. High pod usage plus a busy shared node supports contention; neither guarantees the storefront is unavailable."},
+          {"title":"3. Stress settings and placement","args":"describe pods -n pets -l app=cpu-stress-test --request-timeout=20s","caption":"Expected settings: CPU request 100m, limit 2 cores (2000m), and the busy-loop command on the user pool. Alpine may not provide bc; verify actual metrics instead of assuming the intended calculation is running."}
+        ],
+        "question":"The application feels slow. Which workloads are consuming CPU?","evidenceQuestion":"Compare CPU metrics for cpu-stress-test and the application pods. Inspect scheduling and requests versus limits. Only conclude CPU contention if fresh metrics support it.","remediationQuestion":"Propose removing only the synthetic cpu-stress-test deployment. Do not scale the node pools or raise VM sizes. Request approval before the deletion.","cleanup":{"mode":"delete","kind":"deployment","name":"cpu-stress-test","waitFor":[]},"verify":["get deployments -n pets","top pods -n pets --sort-by=cpu"],"warning":"Collect evidence and clean up promptly. A healthy Running status is not proof of high CPU; metrics may lag and the stress image's behavior must be observed."
+      },
+      {
+        "id":"pending-pods","title":"Unschedulable pods","category":"Scheduling","target":"resource-hog","kind":"Deployment","icon":"server","sequence":"05","suggested":"Capacity, not autoscaling",
+        "browserImpact":"internal",
+        "summary":"Oversized resource requests cannot fit on the fixed-size lab nodes.","mechanism":"The scenario creates resource-hog replicas requesting 8 CPUs and 32Gi memory each, beyond this lab's node capacity.","impact":"Synthetic pods remain Pending; existing store workloads may remain healthy.","signals":["resource-hog pods remain Pending","FailedScheduling events","Requests exceed eligible node capacity"],"watch":"get pods -n pets -l app=resource-hog -w",
+        "confirmation":{"title":"A pod's resource request cannot fit an eligible node","cause":"resource-hog creates five replicas, each requesting 8 CPUs and 32Gi memory on the workload pool. An individual pod must fit on one eligible node; adding together the cluster's resources does not make it fit.","proof":"The pod requests are 8 CPUs / 32Gi AND new FailedScheduling events report insufficient resources on eligible nodes. Compare allocatable capacity and placement rules. Pending alone could also mean another scheduling or storage issue.","impact":"Only the synthetic resource-hog pods are expected to remain unscheduled. They have not started consuming application CPU. The existing storefront can keep working; a successful checkout does not invalidate this scheduling demo."},
+        "observe":[
+          {"title":"1. Exact per-pod requests","args":"get deployment resource-hog -n pets -o custom-columns='DEPLOYMENT:.metadata.name,REPLICAS:.spec.replicas,CPU_REQUEST:.spec.template.spec.containers[*].resources.requests.cpu,MEMORY_REQUEST:.spec.template.spec.containers[*].resources.requests.memory' --request-timeout=20s","caption":"Expected: 5 replicas, CPU_REQUEST = 8 and MEMORY_REQUEST = 32Gi per pod. Requests, not current CPU usage, determine whether the scheduler can place a pod."},
+          {"title":"2. Scheduler's reason","args":"describe pods -n pets -l app=resource-hog --request-timeout=20s","caption":"Expected: Pending, no assigned node, and fresh FailedScheduling events mentioning Insufficient cpu / memory. Read the complete message: selector or taint exclusions explain why other nodes are ineligible."},
+          {"title":"3. Eligible node capacity","args":"describe nodes -l nodepool-type=user --request-timeout=20s","caption":"Compare Allocatable CPU/memory and Allocated resources with each pod's requests. The approved workload node cannot fit 8 CPUs / 32Gi. If no nodes match, investigate the node selector instead of assuming a capacity fault."}
+        ],"question":"Why are the resource-hog pods stuck in Pending?","evidenceQuestion":"Compare each pod's requests with eligible node allocatable CPU and memory, node selectors, and taints. Explain the FailedScheduling events using the current fixed-node configuration.","remediationQuestion":"This is an intentional capacity failure. Propose deleting only resource-hog to restore the lab. Do not increase node counts, enable autoscaling, or change VM sizes.","cleanup":{"mode":"delete","kind":"deployment","name":"resource-hog","waitFor":[]},"verify":["get deployments -n pets","get pods -n pets"],"warning":"Do not scale up to resolve this demo. Unschedulability is the expected outcome on the approved two-node profile."
+      },
+      {
+        "id":"probe-failure","title":"Broken health probe","category":"Health checks","target":"unhealthy-service","kind":"Deployment","icon":"activity","sequence":"06","suggested":"Probe versus application health",
+        "browserImpact":"internal",
+        "summary":"A synthetic service is restarted by an invalid health-check configuration.","mechanism":"The scenario creates unhealthy-service with a failing probe endpoint. Kubernetes reports probe failures and may restart containers.","impact":"The synthetic workload is unhealthy; the baseline store may continue working.","signals":["Unhealthy probe events","Probe path differs from a working endpoint","New restarts after probe failures"],"watch":"get pods -n pets -l app=unhealthy-service -w",
+        "confirmation":{"title":"Health probes request a nonexistent URL","cause":"unhealthy-service runs nginx, but both readiness and liveness probes request /health/nonexistent on port 80. A failing readiness probe keeps the container unready; repeated liveness failures cause restarts.","proof":"The configured probe path is /health/nonexistent AND fresh Unhealthy events report HTTP 404 for that probe. Match subsequent liveness restart events to those failures. Initial startup delays or unrelated container exits are not proof.","impact":"This breaks a synthetic deployment, not the public storefront. Show unhealthy-service with READY 0/1 and probe events. The website and its existing service backends can remain healthy."},
+        "observe":[
+          {"title":"1. Probe configuration and failure events","args":"describe pods -n pets -l app=unhealthy-service --request-timeout=20s","caption":"Expected: readiness/liveness HTTP GET :80/health/nonexistent, Ready = False, and new Unhealthy events with statuscode 404. After the liveness failure threshold, expect restart / Killing events. A Ready=false state alone does not identify the cause."},
+          {"title":"2. Application's response to probes","args":"logs -n pets -l app=unhealthy-service --since=10m --tail=60 --timestamps=true --prefix=true --request-timeout=20s","caption":"Look for nginx handling GET /health/nonexistent with 404. A running web server can still fail a wrongly configured health probe."},
+          {"title":"3. Probe thresholds","args":"get deployment unhealthy-service -n pets -o yaml --request-timeout=20s","caption":"Expected liveness values: initial delay 5 seconds, period 5 seconds, failureThreshold 3. Readiness uses the same bad path with a 3-second initial delay and period. Allow thresholds to be reached before claiming the restart was caused by liveness."}
+        ],"question":"Why does unhealthy-service restart when its application appears to be running?","evidenceQuestion":"Inspect liveness and readiness probe paths, ports, timings, and failure events. Distinguish an invalid health probe from the application actually exiting.","remediationQuestion":"Explain the probe correction, then propose deleting only the synthetic unhealthy-service deployment for demo cleanup. Request approval before changing anything.","cleanup":{"mode":"delete","kind":"deployment","name":"unhealthy-service","waitFor":[]},"verify":["get deployments -n pets","get pods -n pets"],"warning":"Probe failures may take time to meet their configured thresholds. Do not mistake the initial startup period for confirmed failure."
+      },
+      {
+        "id":"network-block","title":"Blocked network traffic","category":"Networking","target":"deny-order-service","kind":"NetworkPolicy","icon":"network","sequence":"07","suggested":"Healthy pods, broken traffic",
+        "browserImpact":"checkout",
+        "summary":"An explicit NetworkPolicy isolates order-service from its callers and dependencies.","mechanism":"The scenario creates the deny-order-service NetworkPolicy, denying both ingress and egress for matching order-service pods.","impact":"Checkout and outbound dependency traffic can fail or time out.","signals":["deny-order-service denies ingress and egress","order-service pods may still appear healthy initially","Checkout traffic fails despite existing endpoints"],"watch":"get pods -n pets -l app=order-service -w",
+        "confirmation":{"title":"NetworkPolicy blocks the order-service traffic path","cause":"deny-order-service selects app=order-service, enables both Ingress and Egress isolation, and allows no traffic. With policy enforcement active and no other selecting policy allowing the path, callers and outbound dependencies are blocked.","proof":"The policy selects the actual order pods with empty ingress/egress rules AND a fresh order request fails or times out. Inspect all selecting policies because allow rules are additive. A policy object alone does not prove traffic is blocked.","impact":"The homepage can load and endpoints can still exist, unlike selector mismatch. Add a test product, open Cart, and click Proceed to Checkout. Capture the failed POST /api/orders in Network; the app reports 'Error occurred while submitting order' after the failure or timeout."},
+        "observe":[
+          {"title":"1. Blocking rules and any overlapping allows","args":"get networkpolicies -n pets -o yaml --request-timeout=20s","caption":"Find deny-order-service: podSelector app=order-service, policyTypes Ingress and Egress, ingress: [] and egress: []. Review other policies too; their allow rules can change the effective result."},
+          {"title":"2. Pods selected by the policy","args":"get pods -n pets -l app=order-service --show-labels --request-timeout=20s","caption":"Confirm that the actual pods carry app=order-service. They may initially remain Running/Ready even while traffic is blocked; later dependency health checks may also fail."},
+          {"title":"3. Rule out a Service selector mismatch","args":"get service order-service -n pets -o custom-columns='SERVICE:.metadata.name,SELECTOR:.spec.selector.app' --request-timeout=20s","caption":"Expected Service selector: order-service, not order-service-v2. If the selector is wrong too, more than one fault may be active."},
+          {"title":"4. Routing destinations can still be present","args":"get endpointslices -n pets -l kubernetes.io/service-name=order-service -o custom-columns='SLICE:.metadata.name,ADDRESS:.endpoints[*].addresses[*],READY:.endpoints[*].conditions.ready' --request-timeout=20s","caption":"Ready pod IPs may remain present despite the failed checkout: endpoints describe destinations, not whether network policy permits packets. Empty or unready endpoints require additional investigation."}
+        ],"question":"Why can the storefront no longer reach order-service even though the pods look healthy?","evidenceQuestion":"Inspect NetworkPolicies selecting order-service, ingress and egress rules, Service selectors, and EndpointSlices. Correlate the new policy with failed checkout and outbound dependency traffic. Do not treat a missing client utility as proof of a network outage.","remediationQuestion":"Propose deleting only deny-order-service. Show its effect on the order-service path and request approval before removing the policy.","cleanup":{"mode":"delete","kind":"networkpolicy","name":"deny-order-service","waitFor":[]},"verify":["get networkpolicies -n pets","get endpointslices -n pets -l kubernetes.io/service-name=order-service"],"warning":"Reapplying the healthy application alone will not remove the blocking NetworkPolicy. Verify an actual checkout request after cleanup."
+      },
+      {
+        "id":"missing-config","title":"Missing configuration","category":"Configuration","target":"misconfigured-service","kind":"Deployment","icon":"book-open","sequence":"08","suggested":"Dependency validation",
+        "browserImpact":"internal",
+        "summary":"Missing ConfigMaps prevent a synthetic container from starting.","mechanism":"The scenario creates misconfigured-service with nonexistent ConfigMaps for both environment variables and a mounted volume.","impact":"The synthetic workload cannot start. The baseline store can remain available.","signals":["ContainerCreating, FailedMount, or CreateContainerConfigError","Events identify missing ConfigMaps","The deployment references nonexistent objects"],"watch":"get pods -n pets -l app=misconfigured-service -w",
+        "confirmation":{"title":"Required ConfigMaps are missing","cause":"misconfigured-service imports environment variables from nonexistent-configmap and mounts another-nonexistent-configmap. Both references are required, but the scenario does not create either object in pets.","proof":"Those names are referenced in the pod specification, absent from pets, and named in fresh missing-ConfigMap / FailedMount events. ContainerCreating or CreateContainerConfigError alone does not identify the missing dependency.","impact":"Only the synthetic workload is prevented from starting. The baseline storefront and checkout can remain available. No application logs are expected from a container that has never started."},
+        "observe":[
+          {"title":"1. Name the missing object from events","args":"describe pods -n pets -l app=misconfigured-service --request-timeout=20s","caption":"Expected: an event naming nonexistent-configmap or another-nonexistent-configmap as not found. The volume failure may appear first as FailedMount / ContainerCreating; the environment reference can cause CreateContainerConfigError."},
+          {"title":"2. Confirm the objects are absent in pets","args":"get configmaps -n pets --request-timeout=20s","caption":"Expected: neither nonexistent-configmap nor another-nonexistent-configmap appears. Other ConfigMaps can exist normally. A similarly named object in a different namespace cannot satisfy these references."},
+          {"title":"3. Match the required references","args":"get deployment misconfigured-service -n pets -o yaml --request-timeout=20s","caption":"Match envFrom.configMapRef.name to nonexistent-configmap and volumes.configMap.name to another-nonexistent-configmap. Do not create guessed configuration or expose Secrets just to remove the error."}
+        ],"question":"What configuration is preventing misconfigured-service from starting?","evidenceQuestion":"Read the startup events and compare the ConfigMap references in the pod specification with objects present in pets. Do not print Secret values or credentials.","remediationQuestion":"Explain the missing configuration, then propose deleting only the synthetic misconfigured-service deployment to restore the lab. Do not invent credentials or change unrelated configuration.","cleanup":{"mode":"delete","kind":"deployment","name":"misconfigured-service","waitFor":[]},"verify":["get deployments -n pets","get pods -n pets"],"warning":"The expected evidence is in pod events; application logs may not exist because the container has not started."
+      },
+      {
+        "id":"mongodb-down","title":"Database dependency outage","category":"Dependencies","target":"mongodb","kind":"Deployment","icon":"database","sequence":"09","suggested":"Cascading failure story",
+        "browserImpact":"orders",
+        "summary":"The store stays visible while a missing database disrupts fulfillment.","mechanism":"The scenario scales MongoDB to zero replicas without deleting its persistent volume. Dependent services may log failures or fail health checks.","impact":"Orders may queue in RabbitMQ without progressing through fulfillment.","signals":["MongoDB desired replicas equal zero","Database connection errors in makeline-service","Queued orders or stalled fulfillment"],"watch":"get pods -n pets -l 'app in (mongodb,makeline-service)' -w",
+        "confirmation":{"title":"MongoDB has been scaled to zero replicas","cause":"The mongodb Deployment requests 0 replicas instead of the baseline 1. Once its pod terminates, dependent services have no running MongoDB instance to connect to; the persistent volume is not deleted.","proof":"DESIRED is 0 and no live MongoDB pod remains. Correlate fresh makeline database connection failures or timeouts with the scale-down. A retained, Bound PVC is not a running database.","impact":"The storefront can load and checkout can still queue an order in RabbitMQ while database-dependent processing fails. Pending orders alone are not proof: virtual-worker is intentionally at 0 replicas in the healthy lab too."},
+        "observe":[
+          {"title":"1. Desired database replica count","args":"get deployment mongodb -n pets -o custom-columns='DEPLOYMENT:.metadata.name,DESIRED:.spec.replicas,READY:.status.readyReplicas,AVAILABLE:.status.availableReplicas' --request-timeout=20s","caption":"Expected fault: DESIRED = 0, READY / AVAILABLE = 0 or <none>. A 0/0 deployment can have a successful rollout while offering no database service; the baseline requires 1 replica."},
+          {"title":"2. Confirm the database pod is gone","args":"get pods -n pets -l app=mongodb -o wide --request-timeout=20s","caption":"After scale-down completes, expect No resources found. A Terminating pod means the transition is still in progress. This is deliberate absence, not CrashLoopBackOff."},
+          {"title":"3. Downstream database connection failures","args":"logs -n pets -l app=makeline-service --since=10m --tail=80 --timestamps=true --prefix=true --request-timeout=20s","caption":"Look for fresh MongoDB connection errors or timeouts after the scale-down. Existing logs, a different dependency error, or no recent traffic do not prove this downstream effect."},
+          {"title":"4. Queue depth / supporting evidence only","args":"exec -n pets deployment/rabbitmq --request-timeout=20s -- rabbitmqctl list_queues name messages_ready messages_unacknowledged","caption":"Compare queue counts over active traffic with the baseline; backlog or unacknowledged work can support the dependency failure. A single nonzero count is not a root-cause diagnosis. This command reads queue counters; it does not purge messages."}
+        ],"question":"The website is up, but orders are not being fulfilled. What failed first?","evidenceQuestion":"Trace the dependency chain from makeline-service to MongoDB and RabbitMQ. Inspect the MongoDB replica count, connection errors, and queue depth. Separate the root outage from downstream symptoms.","remediationQuestion":"Propose restoring MongoDB to its baseline one replica, then verify makeline-service recovery. Preserve the existing persistent volume and all database data. Request approval before applying the change.","cleanup":{"mode":"baseline","waitFor":["mongodb","makeline-service"]},"verify":["get deployments mongodb makeline-service -n pets","get pvc mongodb-data-pvc -n pets"],"warning":"Do not delete the MongoDB deployment or persistent volume as cleanup. Reapply the baseline to restore its replica count and preserve storage."
+      },
+      {
+        "id":"service-mismatch","title":"Service selector mismatch","category":"Routing","target":"order-service","kind":"Service","icon":"network","sequence":"10","suggested":"Silent failure story",
+        "browserImpact":"checkout",
+        "summary":"The shop still opens and pods stay green, but new orders cannot reach order-service.",
+        "mechanism":"Only the order-service Service is changed: its selector switches from app=order-service to app=order-service-v2. A selector is the label rule used to find destination pods. No pods have the new label, so checkout traffic has nowhere to go. This fault does not stop pods or take down the storefront homepage.",
+        "impact":"Show a failed checkout, not a blank homepage. Then show the same checkout working after the selector is corrected.",
+        "signals":["Pods: still Running and Ready; this is expected","Selector: order-service-v2 instead of order-service","Backends: no pod IP addresses; checkout cannot reach them"],"watch":"get pods -n pets -l app=order-service -w",
+        "confirmation":{"title":"Service selector mismatch","cause":"The order-service Service in pets selects app=order-service-v2, but the order-service Deployment creates pods labeled app=order-service. With no matching pods, the Service has zero backend endpoints and new requests through order-service:3000 have no destination.","proof":"The live Service selector is order-service-v2, the actual pods are labeled order-service, and its EndpointSlices contain no ready backend addresses after reconciliation. Capture a failed POST /api/orders as the user-visible effect.","impact":"Pods can remain Running/Ready and the homepage can load. The broken path is checkout, not every service in the application. A successful pod rollout or homepage HTTP 200 cannot establish recovery."},
+        "observe":[
+          {"title":"1. Pods / healthy does not mean reachable","args":"get pods -n pets -l app=order-service --show-labels --request-timeout=20s","caption":"DURING: order-service pods still show Running, all containers READY (normally 1/1), and app=order-service in LABELS. You are not waiting for a crash or a restart.","healthyCaption":"BEFORE / AFTER: order-service pods show Running, all containers READY (normally 1/1), and app=order-service in LABELS. These values can look exactly the same during the fault."},
+          {"title":"2. Service / compare its selector with the pod labels","args":"get service order-service -n pets -o custom-columns='SERVICE:.metadata.name,SELECTOR:.spec.selector.app' --request-timeout=20s","caption":"DURING: SELECTOR = order-service-v2. Compare that with app=order-service above: the names do not match. This is the cause, not a pod failure.","healthyCaption":"BEFORE / AFTER: SELECTOR = order-service, matching the pods' app=order-service label. If it still says order-service-v2, routing is not restored."},
+          {"title":"3. Backends / check the actual destination addresses","args":"get endpointslices -n pets -l kubernetes.io/service-name=order-service -o custom-columns='SLICE:.metadata.name,ADDRESS:.endpoints[*].addresses[*],READY:.endpoints[*].conditions.ready' --request-timeout=20s","caption":"DURING: ADDRESS is empty or <none>, with no READY=true backend. There may be an empty EndpointSlice row or no resources. The slice name or port alone does not prove a destination exists. Recheck after the endpoint controller has reconciled the change.","healthyCaption":"BEFORE / AFTER: ADDRESS contains pod IPs and READY contains true. This lab normally has two ready order-service replicas; counts may vary briefly during rollout. Empty addresses mean checkout is not yet proven healthy."}
+        ],
+        "demo":{
+          "before":["Browser: open the saved storefront link, click Add to Cart for a test product, open Cart, and click Proceed to Checkout. Expect the alert 'Order submitted successfully'; the cart clears. Capture this before injection, not just the product page.","For stronger evidence, open Developer Tools > Network, filter to Fetch/XHR, and capture the POST /api/orders request. Before the fault it should return a successful 2xx response.","Terminal: both nodes should be Ready. The three checks below must show healthy pods, SELECTOR = order-service, and ready backend IP addresses.","Repeat this same checkout and these same commands during the fault and after the fix. Each successful checkout creates a test order; do not use real customer data."],
+          "during":["What stays working: the homepage and products can load; nodes and order-service pods can remain Ready. This is expected and does not mean injection failed.","Browser failure: add a test product, open Cart, and click Proceed to Checkout. Expect 'Error occurred while submitting order'. It can take until the proxy times out before the error appears. The storefront itself does not need to go offline.","Network evidence: open Developer Tools > Network before submitting, filter to Fetch/XHR, and inspect POST /api/orders. Capture its failed response or timeout; the exact HTTP status can vary. The homepage's HTTP 200 is not the checkout result.","Terminal proof: SELECTOR = order-service-v2, pod LABELS still include app=order-service, and ADDRESS has no ready pod IPs. Those three results explain the failed checkout.","Presenter message: 'The application processes are healthy, but the routing rule points to pods that do not exist. We need to repair routing, not restart the application.'"],
+          "after":["Terminal: SELECTOR is back to order-service and backend pod IPs are present with READY=true. The pods may have stayed Running throughout; a restart is not required.","Browser recovery: add a test product, open Cart, and click Proceed to Checkout again. Expect 'Order submitted successfully' and the cart to clear. In Network, require a successful order submission response (2xx) for POST /api/orders. A loaded homepage or green pods alone is not recovery proof.","Compare the captured before / fault / after evidence. Order acceptance is the goal here, not fulfillment; an order can remain Pending because virtual-worker intentionally has 0 replicas."]
+        },
+        "question":"The site loads and pods are Ready, but a new checkout fails. Why?",
+        "evidenceQuestion":"Compare the order-service Service selector with actual pod labels and ready addresses in EndpointSlices. Show the exact mismatched values and explain why checkout fails although the homepage and pods look healthy. Correlate with the failed order submission, not just a homepage HTTP 200.",
+        "remediationQuestion":"Propose correcting only the order-service Service selector to app=order-service. Request approval, then verify ready backend addresses. Ask me to repeat the test checkout and report its result before declaring end-to-end recovery. Do not restart healthy pods as a substitute for fixing routing.",
+        "cleanup":{"mode":"baseline","waitFor":["order-service"]},"verify":["get service order-service -n pets -o custom-columns='SERVICE:.metadata.name,SELECTOR:.spec.selector.app' --request-timeout=20s","get endpointslices -n pets -l kubernetes.io/service-name=order-service -o custom-columns='SLICE:.metadata.name,ADDRESS:.endpoints[*].addresses[*],READY:.endpoints[*].conditions.ready' --request-timeout=20s"],
+        "warning":"If SELECTOR is already order-service and ready backend addresses are present, the mismatch is no longer active: the runner or an earlier fix may have restored it. If checkout succeeds while the wrong selector is still visible, wait for endpoint reconciliation and inspect the new request before claiming an outage. Never present expected results as measurements."
+      }
+    ]
+  }
+  </script>
+  <script>
+    "use strict";
+    const ICON_NODES = {
+      "shopping-cart":[["circle",{"cx":"8","cy":"21","r":"1"}],["circle",{"cx":"19","cy":"21","r":"1"}],["path",{"d":"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"}]],
+      "terminal":[["polyline",{"points":"4 17 10 11 4 5"}],["line",{"x1":"12","x2":"20","y1":"19","y2":"19"}]],
+      "copy":[["rect",{"width":"14","height":"14","x":"8","y":"8","rx":"2","ry":"2"}],["path",{"d":"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"}]],
+      "check":[["path",{"d":"M20 6 9 17l-5-5"}]],
+      "chevron-left":[["path",{"d":"m15 18-6-6 6-6"}]],
+      "chevron-right":[["path",{"d":"m9 18 6-6-6-6"}]],
+      "arrow-up-right":[["path",{"d":"M7 7h10v10"}],["path",{"d":"M7 17 17 7"}]],
+      "search":[["circle",{"cx":"11","cy":"11","r":"8"}],["path",{"d":"m21 21-4.3-4.3"}]],
+      "sun":[["circle",{"cx":"12","cy":"12","r":"4"}],["path",{"d":"M12 2v2"}],["path",{"d":"M12 20v2"}],["path",{"d":"m4.93 4.93 1.41 1.41"}],["path",{"d":"m17.66 17.66 1.41 1.41"}],["path",{"d":"M2 12h2"}],["path",{"d":"M20 12h2"}],["path",{"d":"m6.34 17.66-1.41 1.41"}],["path",{"d":"m19.07 4.93-1.41 1.41"}]],
+      "moon":[["path",{"d":"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"}]],
+      "printer":[["path",{"d":"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"}],["path",{"d":"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"}],["rect",{"x":"6","y":"14","width":"12","height":"8","rx":"1"}]],
+      "maximize-2":[["polyline",{"points":"15 3 21 3 21 9"}],["polyline",{"points":"9 21 3 21 3 15"}],["line",{"x1":"21","x2":"14","y1":"3","y2":"10"}],["line",{"x1":"3","x2":"10","y1":"21","y2":"14"}]],
+      "minimize-2":[["polyline",{"points":"4 14 10 14 10 20"}],["polyline",{"points":"20 10 14 10 14 4"}],["line",{"x1":"14","x2":"21","y1":"10","y2":"3"}],["line",{"x1":"3","x2":"10","y1":"21","y2":"14"}]],
+      "rotate-ccw":[["path",{"d":"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"}],["path",{"d":"M3 3v5h5"}]],
+      "download":[["path",{"d":"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}],["polyline",{"points":"7 10 12 15 17 10"}],["line",{"x1":"12","x2":"12","y1":"15","y2":"3"}]],
+      "shield-check":[["path",{"d":"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"}],["path",{"d":"m9 12 2 2 4-4"}]],
+      "server":[["rect",{"width":"20","height":"8","x":"2","y":"2","rx":"2","ry":"2"}],["rect",{"width":"20","height":"8","x":"2","y":"14","rx":"2","ry":"2"}],["line",{"x1":"6","x2":"6.01","y1":"6","y2":"6"}],["line",{"x1":"6","x2":"6.01","y1":"18","y2":"18"}]],
+      "database":[["ellipse",{"cx":"12","cy":"5","rx":"9","ry":"3"}],["path",{"d":"M3 5V19A9 3 0 0 0 21 19V5"}],["path",{"d":"M3 12A9 3 0 0 0 21 12"}]],
+      "network":[["rect",{"x":"16","y":"16","width":"6","height":"6","rx":"1"}],["rect",{"x":"2","y":"16","width":"6","height":"6","rx":"1"}],["rect",{"x":"9","y":"2","width":"6","height":"6","rx":"1"}],["path",{"d":"M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"}],["path",{"d":"M12 12V8"}]],
+      "cpu":[["rect",{"width":"16","height":"16","x":"4","y":"4","rx":"2"}],["rect",{"width":"6","height":"6","x":"9","y":"9","rx":"1"}],["path",{"d":"M15 2v2"}],["path",{"d":"M15 20v2"}],["path",{"d":"M2 15h2"}],["path",{"d":"M2 9h2"}],["path",{"d":"M20 15h2"}],["path",{"d":"M20 9h2"}],["path",{"d":"M9 2v2"}],["path",{"d":"M9 20v2"}]],
+      "activity":[["path",{"d":"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"}]],
+      "triangle-alert":[["path",{"d":"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"}],["path",{"d":"M12 9v4"}],["path",{"d":"M12 17h.01"}]],
+      "book-open":[["path",{"d":"M12 7v14"}],["path",{"d":"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"}]],
+      "list":[["path",{"d":"M3 12h.01"}],["path",{"d":"M3 18h.01"}],["path",{"d":"M3 6h.01"}],["path",{"d":"M8 12h13"}],["path",{"d":"M8 18h13"}],["path",{"d":"M8 6h13"}]],
+      "play":[["polygon",{"points":"6 3 20 12 6 21 6 3"}]],
+      "eye":[["path",{"d":"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"}],["circle",{"cx":"12","cy":"12","r":"3"}]],
+      "message-square":[["path",{"d":"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"}]],
+      "clipboard-check":[["rect",{"width":"8","height":"4","x":"8","y":"2","rx":"1","ry":"1"}],["path",{"d":"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"}],["path",{"d":"m9 14 2 2 4-4"}]]
+    };
+    const DATA = JSON.parse(document.getElementById("demo-data").textContent);
+    const ENV = DATA.environment;
+    const SCENARIOS = DATA.scenarios;
+    const BROWSER_IMPACTS = {
+      checkout: { label: "Checkout risk", icon: "shopping-cart", tone: "risk", description: "Storefront products can still load, but a new checkout may fail. Existing orders in the admin portal may remain visible." },
+      catalog: { label: "Product loading risk", icon: "book-open", tone: "risk", description: "The storefront page may open, but products can fail to load after a hard refresh. This does not deliberately stop the admin frontend." },
+      orders: { label: "Admin / orders risk", icon: "list", tone: "risk", description: "The storefront and checkout may still work, but admin order data or downstream processing can fail or stall. Order acceptance is not fulfillment." },
+      latency: { label: "Possible slowness", icon: "activity", tone: "warning", description: "Either website may respond more slowly under CPU pressure. A complete outage is not guaranteed; compare request timings." },
+      internal: { label: "Internal test only", icon: "server", tone: "neutral", description: "No public website outage is intended. The fault is in synthetic pods; the storefront and admin portal should keep working." }
+    };
+    const STAGES = [
+      { name: "Prepare", icon: "shield-check", check: "Baseline confirmed" },
+      { name: "Inject", icon: "play", check: "Fault applied manually" },
+      { name: "Observe", icon: "eye", check: "Fresh evidence captured" },
+      { name: "Ask SRE", icon: "message-square", check: "Investigation reviewed" },
+      { name: "Restore", icon: "rotate-ccw", check: "Cleanup performed" },
+      { name: "Verify", icon: "clipboard-check", check: "Recovery verified" }
+    ];
+    const STORAGE_KEY = "sre-demo-desk-v1";
+    const state = { scenario: "oom-killed", stage: 0, checks: {}, notes: {}, view: "runbook", promptMode: "evidence" };
+    let storageAvailable = true;
+    let toastTimeout;
+    let printTheme;
+
+    function element(tagName, className, text) {
+      const node = document.createElement(tagName);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    function icon(name, size = 17) {
+      const namespace = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(namespace, "svg");
+      for (const [attribute, value] of Object.entries({ width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 1.7, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" })) svg.setAttribute(attribute, value);
+      for (const [tagName, attributes] of ICON_NODES[name] || ICON_NODES.terminal) {
+        const shape = document.createElementNS(namespace, tagName);
+        for (const [attribute, value] of Object.entries(attributes)) shape.setAttribute(attribute, value);
+        svg.append(shape);
+      }
+      return svg;
+    }
+    function selectedScenario() { return SCENARIOS.find(scenario => scenario.id === state.scenario); }
+    function checkedStages(scenarioId = state.scenario) { return state.checks[scenarioId] || Array(6).fill(false); }
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ scenario: state.scenario, stage: state.stage, checks: state.checks, notes: state.notes })); }
+      catch { storageAvailable = false; }
+      document.getElementById("notes-meta").textContent = storageAvailable ? "Stored in this browser only" : "Browser storage unavailable; this session only";
+    }
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (!saved || typeof saved !== "object") return;
+        if (SCENARIOS.some(scenario => scenario.id === saved.scenario)) state.scenario = saved.scenario;
+        if (Number.isInteger(saved.stage) && saved.stage >= 0 && saved.stage < 6) state.stage = saved.stage;
+        for (const scenario of SCENARIOS) {
+          if (Array.isArray(saved.checks?.[scenario.id])) state.checks[scenario.id] = Array.from({ length: 6 }, (_, index) => saved.checks[scenario.id][index] === true);
+          if (typeof saved.notes?.[scenario.id] === "string") state.notes[scenario.id] = saved.notes[scenario.id].slice(0, 4000);
+        }
+      } catch { storageAvailable = false; }
+    }
+    function kubectl(argumentsText) { return `kubectl --context ${ENV.cluster} ${argumentsText}`; }
+    function scriptCommand(name, extra = "") { return `& '${ENV.repoPath}\\scripts\\${name}' -ResourceGroupName ${ENV.resourceGroup}${extra ? " " + extra : ""}`; }
+    function baselineCommand() { return kubectl(`apply -f '${ENV.repoPath}\\k8s\\base\\application.yaml'`); }
+    function preparationCommands() {
+      return `Set-Location '${ENV.repoPath}\\scripts'\naz account set --subscription ${ENV.subscriptionId}\nkubectl config use-context ${ENV.cluster}\n${kubectl("config view --minify -o jsonpath='{.clusters[0].cluster.server}'")}`;
+    }
+    function applicationUrlCommands() {
+      return `& {
+  foreach ($serviceName in @('store-front', 'store-admin')) {
+    $publicIp = ${kubectl("get service $serviceName -n pets -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --request-timeout=20s")}
+    if ($LASTEXITCODE -ne 0) {
+      throw "Could not read Service/$serviceName. Check AKS access and context."
+    }
+    if ([string]::IsNullOrWhiteSpace($publicIp)) {
+      throw "Service/$serviceName has no assigned public IP yet."
+    }
+    [pscustomobject]@{ Application = $serviceName; URL = "http://$publicIp" }
+  }
+} | Format-Table -AutoSize`;
+    }
+    function restoreCommands(scenario) {
+      const commands = [];
+      if (scenario.cleanup.mode === "delete") commands.push(kubectl(`delete ${scenario.cleanup.kind} ${scenario.cleanup.name} -n pets --ignore-not-found=true --timeout=120s`));
+      commands.push(baselineCommand());
+      for (const deploymentName of scenario.cleanup.waitFor) commands.push(kubectl(`rollout status deployment/${deploymentName} -n pets --timeout=300s`));
+      return commands.join("\n");
+    }
+    function scopedPrompt(scenario, mode = "evidence") {
+      const question = mode === "open" ? scenario.question : mode === "remediation" ? scenario.remediationQuestion : scenario.evidenceQuestion;
+      return `Scope: subscription ${ENV.subscriptionId} (${ENV.subscriptionName}), resource group ${ENV.resourceGroup}, ${ENV.region}, AKS ${ENV.cluster}, namespace pets.\n\n${question}\n\nUse fresh evidence from the last 10 minutes and distinguish earlier restarts from this demo. Remain in Review mode. Explain root cause, cite the evidence, and propose a minimal fix before any write action. Do not change node counts, VM sizes, autoscaling, permissions, or resources outside this lab. Do not reveal secrets.`;
+    }
+    function selectorBaselineBlocks(scenario) {
+      return scenario.observe.map(observation => ({ title: observation.title, code: kubectl(observation.args), caption: observation.healthyCaption }));
+    }
+    function recoveryProofContent(scenario) {
+      if (scenario.id === "service-mismatch") return {
+        title: "Prove checkout is working again",
+        description: "After the approved agent fix, run the same three checks you used before injection. Do not run manual Restore first: capture whether the agent's selector correction restored routing, then repeat the browser checkout.",
+        blocks: selectorBaselineBlocks(scenario),
+        signals: scenario.demo.after,
+        notice: "Homepage HTTP 200 and Ready pods can occur before, during, and after this fault. Require matching labels, ready backend addresses, and a successful new order submission. Use Verify after capturing these results; Restore is only a fallback or later baseline reset."
+      };
+      const httpCheck = `& {
+  $targets = @(
+    @{ Name = 'Storefront'; Url = '${ENV.storeUrl}' }
+    @{ Name = 'Store admin'; Url = '${ENV.adminUrl}' }
+  )
+  $results = @(
+    foreach ($target in $targets) {
+      try {
+        $response = Invoke-WebRequest -Uri $target.Url -Method Get -TimeoutSec 20 -SkipHttpErrorCheck -ErrorAction Stop
+        [pscustomobject]@{
+          Application = $target.Name
+          HTTP = [int]$response.StatusCode
+          Result = if ($response.StatusCode -eq 200) { 'ONLINE' } else { 'CHECK FAILED' }
+        }
+      } catch {
+        [pscustomobject]@{ Application = $target.Name; HTTP = '-'; Result = 'UNREACHABLE' }
+      }
+    }
+  )
+  $results | Format-Table -AutoSize
+  if (@($results | Where-Object Result -ne 'ONLINE').Count -gt 0) {
+    throw 'An HTTP check failed. Do not declare recovery yet.'
+  }
+}`;
+      return {
+        title: "Prove the app is back online",
+        description: "After the approved SRE Agent fix completes, capture the current state before running manual Restore. These checks only read Kubernetes state and make HTTP GET requests; they do not reset the agent's changes.",
+        blocks: [
+          { title: "1. Nodes and application workloads", code: `Get-Date -Format o\n${kubectl("get nodes -o wide")}\n${kubectl("get deployments -n pets")}\n${kubectl("get pods -n pets -o wide")}`, caption: "Expected: both nodes Ready; active application pods Running with all containers ready; available deployment replicas match the desired count. virtual-worker intentionally remains at 0 replicas." },
+          { title: "2. Readiness and service backends", code: `${kubectl("wait --for=condition=Ready pod --all -n pets --timeout=180s")}\n${kubectl("get services -n pets -o wide")}\n${kubectl("get endpointslices -n pets -o yaml")}`, caption: "Expect 'condition met' for current pods and nonempty EndpointSlice addresses with conditions.ready: true for the affected Service. A timeout, missing backend, or unhealthy pod means recovery is not yet demonstrated." },
+          { title: "3. HTTP availability / PowerShell 7", code: httpCheck, caption: "Expected table: Storefront and Store admin each show HTTP 200 and ONLINE. Non-200 responses and connection failures are reported as failures. Compare the service EXTERNAL-IP values with the URLs if the lab was redeployed." },
+          { title: `4. Scenario evidence / ${scenario.id}`, code: scenario.verify.map(kubectl).join("\n"), caption: "Confirm the original fault is resolved, not just that a pod restarted. Historical restart counts and Warning events may remain; new failures should stop. Any synthetic resource removed by the agent should be absent." }
+        ],
+        notice: "HTTP 200 proves website reachability, not a complete transaction. Demonstrate a test checkout for order-service or network failures, and fulfillment for MongoDB. If the fix is verified, proceed to Verify without running Restore first. Restore remains the manual fallback or a later reset to the exact baseline."
+      };
+    }
+    function stageContent(scenario, stageIndex) {
+      switch (stageIndex) {
+        case 0: return {
+          title: "Start from a healthy baseline", description: scenario.demo ? "For a fresh run, prove that a new checkout works before changing the Service. Expect healthy pods AND working routing. If you already injected this fault, go to Observe now; current output cannot prove what was healthy before injection." : "Select the approved subscription and cluster, then verify the existing app. Stop if validation fails or an earlier scenario is still active.",
+          blocks: [
+            { title: "PowerShell / select the lab", code: preparationCommands(), caption: `Expected API hostname: ${ENV.apiHost}. The ResourceGroupName parameter alone does not select kubectl's target.` },
+            { title: "PowerShell / discover public application URLs", code: applicationUrlCommands(), caption: "Read-only lookup: the table prints current browser-ready URLs, not a health result. Saved links below may change after redeployment; use the terminal URLs if different. Before Inject, confirm products load and perform a test checkout. These sites use HTTP; use test data only.", links: [{ label: "Saved storefront URL", url: ENV.storeUrl }, { label: "Saved admin portal URL", url: ENV.adminUrl }] },
+            { title: "Current nodes and deployment health", code: `${kubectl("get nodes")}\n${kubectl("get deployments,pods,networkpolicies -n pets")}\n${scriptCommand("validate-deployment.ps1")}`, caption: "Expected baseline: 2 Ready nodes, healthy baseline deployments, and no scenario-only resources. virtual-worker intentionally has 0 replicas. Pod counts can briefly vary during rollout." },
+            ...(scenario.demo ? selectorBaselineBlocks(scenario) : [])
+          ],
+          signals: scenario.demo?.before, signalsTitle: "Before injection / what to do and what to see",
+          notice: "Context commands change your local CLI selection, not Azure resources. Continue only after the API hostname and healthy baseline are confirmed."
+        };
+        case 1: return {
+          title: "Apply one deliberate fault", description: scenario.mechanism,
+          blocks: [{ title: `PowerShell / apply ${scenario.id}`, code: `Get-Date -Format o\n${kubectl(`apply -f '${ENV.repoPath}\\k8s\\scenarios\\${scenario.id}.yaml'`)}`, caption: "Record the injection time. This command changes the deployed lab; copying it here does not execute it." }],
+          signals: scenario.demo?.during, signalsTitle: "After injection / expected contrast",
+          notice: scenario.cleanup.mode === "delete" ? `This creates ${scenario.cleanup.kind}/${scenario.cleanup.name}. Restore must explicitly remove it; the baseline manifest alone will not.` : "This changes an existing application resource. Restore by reapplying the baseline, not by deleting the scenario manifest.", danger: true
+        };
+        case 2: return {
+          title: scenario.demo ? "Prove checkout fails while pods stay healthy" : "Observe pods, then prove the cause", description: scenario.demo ? "Keep the fault active. Run these three read-only checks and compare each result with its DURING caption. Then submit a new test order in the browser; refreshing the homepage is not the failure test." : "Keep the fault active while collecting fresh evidence. A pod status alone is not a diagnosis. Compare event and restart times with your injection.",
+          confirmation: scenario.confirmation,
+          blocks: [...scenario.observe.map(observation => ({ title: observation.title, code: kubectl(observation.args), caption: observation.caption })), ...(scenario.demo ? [] : [{ title: "Optional live pod watch", code: kubectl(scenario.watch), caption: "Run after collecting the evidence above. Ctrl+C returns to the prompt; it does not remove the fault. A pod's status alone is not the failure verdict." }])], notice: scenario.warning, signals: scenario.demo?.during || scenario.signals, signalsTitle: scenario.demo ? "Browser and terminal / expected fault evidence" : "Evidence to capture"
+        };
+        case 3: return { title: "Let SRE Agent investigate", description: "Open sre-srelab, keep the fault active, and begin a scoped investigation. Review the evidence and proposed change before approving any remediation.", blocks: [], prompt: true, recoveryProof: recoveryProofContent(scenario), notice: "Manual chat is the reliable presenter path. Automatic alert ingestion and incident processing are separate stages and can lag; they are not guaranteed for every scenario." };
+        case 4: return {
+          title: "Remove the fault, preserve the lab", description: scenario.cleanup.mode === "delete" ? `Remove only ${scenario.cleanup.kind}/${scenario.cleanup.name}, then reapply the healthy app. Keep the cluster, node sizes, registry, and database storage intact.` : "Reapply the known-good application specification. This restores baseline resource settings and waits for the affected deployments.",
+          blocks: [{ title: "PowerShell / scenario-specific recovery", code: restoreCommands(scenario), caption: "A successful apply is not a health check. Continue to Verify and confirm application behavior." }], notice: scenario.id === "mongodb-down" ? "Preserve mongodb-data-pvc and its managed disk. Do not delete database storage to recover this scenario." : "Do not leave intentional failures running unattended. Do not run cleanup concurrently with an investigation you still need."
+        };
+        case 5: return {
+          title: "Confirm recovery with evidence", description: scenario.demo ? "Repeat the same three routing checks and the same test checkout. Recovery means requests can reach order-service again, not that a previously healthy pod is still green." : "Check the affected resources, validate the whole application, and exercise the user flow. Old Warning events can remain after a successful recovery.",
+          blocks: [...(scenario.demo ? selectorBaselineBlocks(scenario) : [{ title: "Affected resource state", code: scenario.verify.map(kubectl).join("\n") }]), { title: "Whole-lab validation", code: scriptCommand("validate-deployment.ps1") }],
+          signals: scenario.demo?.after, signalsTitle: "After the fix / required recovery evidence",
+          notice: ["service-mismatch", "network-block"].includes(scenario.id) ? "Confirm ready Service backends and a successful test checkout. Healthy pod status alone is not enough." : "Open the storefront and confirm the relevant application flow. For MongoDB, inspect fulfillment and database connectivity, not just the landing page.",
+          recoveryPrompt: `On ${ENV.cluster} in ${ENV.resourceGroup}, verify recovery of the ${scenario.id} demo in pets. Check current readiness, fresh events, the affected service path, and any remaining scenario-only resources. Report residual issues without making changes.`
+        };
+      }
+    }
+    function notify(message) {
+      const toast = document.getElementById("toast");
+      clearTimeout(toastTimeout);
+      toast.textContent = message;
+      toast.hidden = false;
+      toastTimeout = setTimeout(() => { toast.hidden = true; }, 2600);
+    }
+    async function copyText(text, button) {
+      let copied = false;
+      try {
+        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); copied = true; }
+      } catch {}
+      if (!copied) {
+        const previousFocus = document.activeElement;
+        const temporary = element("textarea", "sr-only");
+        temporary.value = text;
+        document.body.append(temporary);
+        temporary.select();
+        try { copied = document.execCommand("copy"); } catch {}
+        temporary.remove();
+        previousFocus?.focus({ preventScroll: true });
+      }
+      if (copied) {
+        notify("Copied to clipboard. No command was executed.");
+        if (button) { const original = button.cloneNode(true); button.replaceChildren(icon("check", 15)); setTimeout(() => { if (button.isConnected) button.replaceChildren(...Array.from(original.childNodes)); }, 1400); }
+      } else {
+        const dialog = document.getElementById("clipboard-dialog");
+        document.getElementById("clipboard-text").value = text;
+        dialog.showModal();
+        document.getElementById("clipboard-text").select();
+      }
+    }
+    function copyButton(text, title = "Copy command") {
+      const button = element("button", "icon-button");
+      button.type = "button";
+      button.title = title;
+      button.setAttribute("aria-label", title);
+      button.append(icon("copy", 15));
+      button.addEventListener("click", () => copyText(text, button));
+      return button;
+    }
+    function codeBlock(block) {
+      const wrapper = element("div");
+      const framed = element("div", "command-block");
+      const top = element("div", "command-top");
+      const title = element("span", "inline");
+      title.append(icon("terminal", 14), element("span", "", block.title));
+      top.append(title, copyButton(block.code, `Copy ${block.title}`));
+      const pre = element("pre");
+      pre.append(element("code", "", block.code));
+      framed.append(top, pre);
+      wrapper.append(framed);
+      if (block.caption) wrapper.append(element("p", "command-caption", block.caption));
+      for (const target of block.links || []) {
+        const link = element("a", "resource-link");
+        link.href = target.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        const text = element("span");
+        text.append(element("strong", "", target.label), element("small", "", target.url));
+        link.append(text, icon("arrow-up-right", 17));
+        wrapper.append(link);
+      }
+      return wrapper;
+    }
+    function callout(text, danger = false) {
+      const node = element("div", danger ? "callout danger" : "callout");
+      node.append(icon("triangle-alert", 16), element("p", "", text));
+      return node;
+    }
+    function evidenceList(signals) {
+      const list = element("ul", "evidence-list");
+      signals.forEach(signal => list.append(element("li", "", signal)));
+      return list;
+    }
+    function failureConfirmation(confirmation) {
+      const section = element("section", "failure-confirmation");
+      section.append(element("h3", "", `Root cause to confirm: ${confirmation.title}`), element("p", "stage-description", confirmation.cause));
+      for (const [label, text] of [["Confirm only when: ", confirmation.proof], ["What the audience sees: ", confirmation.impact]]) {
+        const paragraph = element("p", "stage-description");
+        paragraph.append(element("strong", "", label), document.createTextNode(text));
+        section.append(paragraph);
+      }
+      return section;
+    }
+    function impactBadge(impactName) {
+      const impact = BROWSER_IMPACTS[impactName];
+      const badge = element("span", "impact-badge");
+      badge.dataset.impact = impactName;
+      badge.dataset.tone = impact.tone;
+      badge.title = `Expected impact, not live status: ${impact.description}`;
+      badge.append(icon(impact.icon, 15), element("span", "", impact.label));
+      return badge;
+    }
+    function renderScenarioList() {
+      const query = document.getElementById("scenario-search").value.trim().toLowerCase();
+      const list = document.getElementById("scenario-list");
+      list.replaceChildren();
+      let matches = 0;
+      for (const scenario of SCENARIOS) {
+        if (!`${scenario.title} ${scenario.id} ${scenario.category} ${scenario.target} ${BROWSER_IMPACTS[scenario.browserImpact].label}`.toLowerCase().includes(query)) continue;
+        matches++;
+        const button = element("button", "scenario-option");
+        button.type = "button";
+        button.dataset.scenario = scenario.id;
+        button.setAttribute("aria-pressed", String(scenario.id === state.scenario));
+        button.title = `${scenario.id}: ${scenario.summary}`;
+        const labels = element("span");
+        labels.append(element("span", "scenario-title", scenario.title), element("span", "scenario-subtitle", scenario.category), impactBadge(scenario.browserImpact));
+        button.append(icon(scenario.icon, 19), labels, element("span", "scenario-progress", `${checkedStages(scenario.id).filter(Boolean).length}/6`));
+        button.addEventListener("click", () => selectScenario(scenario.id));
+        list.append(button);
+      }
+      document.getElementById("empty-search").hidden = matches > 0;
+    }
+    function selectScenario(scenarioId) {
+      if (!SCENARIOS.some(scenario => scenario.id === scenarioId)) return;
+      state.scenario = scenarioId;
+      state.stage = 0;
+      state.promptMode = "evidence";
+      setView("runbook");
+      renderWorkspace();
+      saveState();
+    }
+    function selectStage(stageIndex, focusTab = false) {
+      state.stage = Math.min(5, Math.max(0, stageIndex));
+      renderStages();
+      renderStagePanel();
+      saveState();
+      if (focusTab) document.getElementById(`stage-tab-${state.stage}`).focus();
+    }
+    function setCheckpoint(stageIndex, checked) {
+      const stages = [...checkedStages()];
+      stages[stageIndex] = checked;
+      state.checks[state.scenario] = stages;
+      saveState();
+      renderScenarioList();
+      renderStages();
+      renderChecklist();
+      updateStageFooter();
+    }
+    function renderStages() {
+      const parent = document.getElementById("stage-tabs");
+      parent.replaceChildren();
+      STAGES.forEach((stage, index) => {
+        const button = element("button", `stage-tab${checkedStages()[index] ? " is-checked" : ""}`);
+        button.id = `stage-tab-${index}`;
+        button.type = "button";
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", String(index === state.stage));
+        button.setAttribute("aria-controls", "stage-panel");
+        button.tabIndex = index === state.stage ? 0 : -1;
+        const number = element("span", "stage-number");
+        if (checkedStages()[index]) number.append(icon("check", 13)); else number.textContent = String(index + 1);
+        button.append(number, element("span", "", stage.name));
+        button.addEventListener("click", () => selectStage(index));
+        parent.append(button);
+      });
+    }
+    function renderChecklist() {
+      const list = document.getElementById("checkpoint-list");
+      list.replaceChildren();
+      STAGES.forEach((stage, index) => {
+        const label = element("label", "mini-checkpoint");
+        const input = element("input");
+        input.type = "checkbox";
+        input.checked = checkedStages()[index];
+        input.setAttribute("aria-label", stage.check);
+        input.addEventListener("change", () => setCheckpoint(index, input.checked));
+        label.append(input, document.createTextNode(stage.name));
+        list.append(label);
+      });
+      document.getElementById("checklist-count").textContent = ` ${checkedStages().filter(Boolean).length}/6`;
+    }
+    function updateStageFooter() {
+      document.getElementById("current-checkpoint").checked = checkedStages()[state.stage];
+      document.getElementById("checkpoint-label").textContent = STAGES[state.stage].check;
+      document.getElementById("previous-stage").disabled = state.stage === 0;
+      const next = document.getElementById("next-stage");
+      next.replaceChildren(document.createTextNode(state.stage === 5 ? "All scenarios" : `Next: ${STAGES[state.stage + 1].name}`), icon("chevron-right", 16));
+    }
+    function renderPromptSection(parent, scenario) {
+      const link = element("a", "link-button", "Open sre-srelab");
+      link.href = ENV.agentUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.append(icon("arrow-up-right", 15));
+      parent.append(link);
+      const tabs = element("div", "prompt-tabs");
+      tabs.setAttribute("role", "tablist");
+      tabs.setAttribute("aria-label", "Investigation prompt");
+      for (const [mode, label] of [["open", "Open-ended"], ["evidence", "Evidence-focused"], ["remediation", "Review a fix"]]) {
+        const button = element("button", "prompt-tab", label);
+        button.type = "button";
+        button.dataset.promptMode = mode;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", String(mode === state.promptMode));
+        button.setAttribute("aria-controls", "investigation-prompt");
+        button.tabIndex = mode === state.promptMode ? 0 : -1;
+        button.addEventListener("click", () => { state.promptMode = mode; renderStagePanel(); document.querySelector(`[data-prompt-mode="${mode}"]`).focus(); });
+        tabs.append(button);
+      }
+      tabs.addEventListener("keydown", event => {
+        if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+        event.preventDefault();
+        const modes = ["open", "evidence", "remediation"];
+        state.promptMode = modes[(modes.indexOf(state.promptMode) + (event.key === "ArrowRight" ? 1 : 2)) % 3];
+        renderStagePanel();
+        document.querySelector(`[data-prompt-mode="${state.promptMode}"]`).focus();
+      });
+      const prompt = scopedPrompt(scenario, state.promptMode);
+      const text = element("div", "prompt-block", prompt);
+      text.id = "investigation-prompt";
+      text.style.whiteSpace = "pre-wrap";
+      text.setAttribute("role", "tabpanel");
+      text.setAttribute("aria-label", "Scoped SRE Agent prompt");
+      const actions = element("div", "prompt-actions");
+      const copy = element("button", "command-button", "Copy prompt");
+      copy.type = "button";
+      copy.prepend(icon("copy", 16));
+      copy.addEventListener("click", () => copyText(prompt));
+      actions.append(copy);
+      parent.append(tabs, text, actions);
+    }
+    function renderStagePanel() {
+      const scenario = selectedScenario();
+      const content = stageContent(scenario, state.stage);
+      const panel = document.getElementById("stage-panel");
+      panel.replaceChildren();
+      panel.setAttribute("aria-labelledby", `stage-tab-${state.stage}`);
+      const heading = element("div", "stage-title-line");
+      heading.append(icon(STAGES[state.stage].icon, 22), element("h3", "", content.title));
+      panel.append(heading, element("p", "stage-description", content.description));
+      if (content.danger) panel.append(callout(content.notice, true));
+      if (content.confirmation) panel.append(failureConfirmation(content.confirmation));
+      if (scenario.demo && content.signals) panel.append(element("h3", "", content.signalsTitle), evidenceList(content.signals));
+      for (const block of content.blocks) panel.append(codeBlock(block));
+      if (content.prompt) renderPromptSection(panel, scenario);
+      if (content.signals && !scenario.demo) {
+        panel.append(element("h3", "", content.signalsTitle || "Evidence to capture"), evidenceList(content.signals));
+      }
+      if (content.recoveryPrompt) {
+        const link = element("a", "link-button", "Open storefront");
+        link.href = ENV.storeUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.append(icon("arrow-up-right", 15));
+        panel.append(link, codeBlock({ title: "SRE Agent / recovery prompt", code: content.recoveryPrompt }));
+      }
+      if (!content.danger) panel.append(callout(content.notice));
+      if (content.recoveryProof) {
+        const proof = content.recoveryProof;
+        const section = element("section", "recovery-proof");
+        section.setAttribute("aria-labelledby", "recovery-proof-heading");
+        const title = element("h3", "", proof.title);
+        title.id = "recovery-proof-heading";
+        const heading = element("div", "stage-title-line");
+        heading.append(icon("clipboard-check", 22), title);
+        section.append(element("p", "eyebrow", "After SRE Agent remediation"), heading, element("p", "stage-description", proof.description));
+        proof.blocks.forEach(block => section.append(codeBlock(block)));
+        if (proof.signals) section.append(element("h3", "", "After the fix / required recovery evidence"), evidenceList(proof.signals));
+        section.append(callout(proof.notice));
+        const verify = element("button", "command-button", "Continue to Verify");
+        verify.type = "button";
+        verify.prepend(icon("clipboard-check", 16));
+        verify.addEventListener("click", () => selectStage(5, true));
+        section.append(verify);
+        panel.append(section);
+      }
+      updateStageFooter();
+    }
+    function renderRunner() {
+      const scenario = selectedScenario();
+      const runner = document.getElementById("runner-content");
+      runner.replaceChildren(element("p", "", "The runner captures baseline/fault/recovery reports and restores automatically. It does not pause for SRE Agent chat, and its observation checks can match old restarts. Alert, investigation, and approval are not proven by a successful exit code."));
+      if (scenario.cleanup.mode === "delete") runner.append(callout(`Do not rely on this runner for cleanup of ${scenario.id}. It does not remove ${scenario.cleanup.kind}/${scenario.cleanup.name}. Use the manual Restore stage.`));
+      runner.append(codeBlock({ title: "Optional PowerShell runner / correct named arguments", code: `Set-Location '${ENV.repoPath}\\scripts'\nkubectl config use-context ${ENV.cluster}\n.\\run-demo-scenario.ps1 -ResourceGroupName ${ENV.resourceGroup} -Scenario ${scenario.id}`, caption: `Identifier: ${scenario.id}. For OOM, use oom-killed, not oomkilled. Reports are written under the repository's evidence directory.` }));
+    }
+    function renderWorkspace() {
+      const scenario = selectedScenario();
+      const impact = BROWSER_IMPACTS[scenario.browserImpact];
+      document.getElementById("scenario-kicker").textContent = `Scenario ${scenario.sequence} / ${scenario.category}`;
+      document.getElementById("scenario-heading").textContent = scenario.title;
+      document.getElementById("scenario-summary").textContent = scenario.summary;
+      document.getElementById("scenario-impact").replaceChildren(impactBadge(scenario.browserImpact), element("p", "", impact.description), element("p", "impact-note", "Expected effect, not live status. Confirm it in Observe; healthy replicas may mask failures."));
+      document.getElementById("scenario-select").value = state.scenario;
+      document.getElementById("brief-target").replaceChildren(icon(scenario.icon, 20), element("code", "", scenario.target));
+      document.getElementById("brief-impact").textContent = scenario.impact;
+      const signals = document.getElementById("expected-signals");
+      signals.replaceChildren();
+      for (const signal of scenario.signals) { const item = element("li"); item.append(icon("chevron-right", 13), document.createTextNode(signal)); signals.append(item); }
+      document.getElementById("presenter-notes").value = state.notes[state.scenario] || "";
+      document.getElementById("runner-details").open = false;
+      renderScenarioList();
+      renderStages();
+      renderStagePanel();
+      renderChecklist();
+      renderRunner();
+    }
+    function setView(viewName, focusTab = false) {
+      if (!["runbook", "catalog", "lab"].includes(viewName)) return;
+      state.view = viewName;
+      document.querySelectorAll("[data-view]").forEach(button => { const selected = button.dataset.view === viewName; button.setAttribute("aria-selected", String(selected)); button.tabIndex = selected ? 0 : -1; });
+      for (const name of ["runbook", "catalog", "lab"]) document.getElementById(`${name}-view`).hidden = name !== viewName;
+      if (focusTab) document.getElementById(`view-${viewName}`).focus();
+    }
+    function renderCatalog() {
+      const parent = document.getElementById("catalog-body");
+      document.getElementById("impact-legend").replaceChildren(...Object.keys(BROWSER_IMPACTS).map(impactBadge));
+      for (const scenario of SCENARIOS) {
+        const row = element("tr");
+        const name = element("td");
+        name.append(element("strong", "", scenario.title), element("code", "", scenario.id), impactBadge(scenario.browserImpact));
+        const impact = element("td");
+        impact.dataset.label = "Target";
+        impact.append(element("code", "", scenario.target), element("span", "table-subtext", scenario.impact));
+        const recovery = element("td");
+        recovery.dataset.label = "Restore";
+        const label = element("span", scenario.cleanup.mode === "delete" ? "cleanup-label extra" : "cleanup-label", scenario.cleanup.mode === "delete" ? "Explicit deletion + baseline" : "Reapply baseline");
+        recovery.append(label, element("span", "table-subtext", scenario.cleanup.mode === "delete" ? `${scenario.cleanup.kind}/${scenario.cleanup.name}` : scenario.cleanup.waitFor.join(", ")));
+        const action = element("td");
+        const open = element("button", "icon-button");
+        open.type = "button";
+        open.title = `Open ${scenario.title}`;
+        open.setAttribute("aria-label", `Open ${scenario.title}`);
+        open.append(icon("arrow-up-right"));
+        open.addEventListener("click", () => { selectScenario(scenario.id); document.getElementById("scenario-select").focus({ preventScroll: true }); window.scrollTo({ top: 0 }); });
+        action.append(open);
+        row.append(name, impact, recovery, action);
+        parent.append(row);
+      }
+    }
+    function fullRecoveryCommands() {
+      return [
+        kubectl("delete deployment cpu-stress-test resource-hog unhealthy-service misconfigured-service -n pets --ignore-not-found=true --timeout=120s"),
+        kubectl("delete networkpolicy deny-order-service -n pets --ignore-not-found=true --timeout=120s"), baselineCommand(),
+        `$deploymentNames = ${kubectl("get deployments -n pets -o jsonpath='{.items[*].metadata.name}'")}`,
+        `foreach ($deploymentName in ($deploymentNames -split '\\s+')) {\n  ${kubectl('rollout status "deployment/$deploymentName" -n pets --timeout=300s')}\n  if ($LASTEXITCODE -ne 0) { throw "Recovery failed: $deploymentName" }\n}`,
+        scriptCommand("validate-deployment.ps1")
+      ].join("\n");
+    }
+    function renderLab() {
+      const profile = document.getElementById("lab-profile");
+      const facts = [["Region", ENV.region], ["Subscription", ENV.subscriptionName], ["Subscription ID", ENV.subscriptionId], ["Resource group", ENV.resourceGroup], ["Node group", ENV.nodeGroup], ["Cluster", "aks-srelab / AKS Free"], ["System pool", "1 x Standard_D4as_v5"], ["Workload pool", "1 x Standard_D2as_v5"], ["Node scaling", "Fixed counts / autoscaling off"], ["OS disks", "32 GiB per node"], ["MongoDB storage", "8 GiB / StandardSSD_LRS"], ["Registry", "acrsrelabixeeyc / Basic"], ["Agent", "sre-srelab / Review mode"], ["Required tag", "SecurityControl=Ignore"]];
+      for (const [label, value] of facts) { const row = element("div", "profile-row"); row.append(element("dt", "", label), element("dd", "", value)); profile.append(row); }
+      const groupPath = `/subscriptions/${ENV.subscriptionId}/resourceGroups/${ENV.resourceGroup}`;
+      const links = [["SRE Agent", "sre-srelab / investigation and review", ENV.agentUrl], ["Storefront", ENV.storeUrl, ENV.storeUrl], ["Store administration", ENV.adminUrl, ENV.adminUrl], ["Resource group", ENV.resourceGroup, `https://portal.azure.com/#resource${groupPath}/overview`], ["AKS / Container Insights", "aks-srelab / current cluster and monitoring", `https://portal.azure.com/#resource${groupPath}/providers/Microsoft.ContainerService/managedClusters/aks-srelab/overview`], ["Log Analytics", "log-srelab / logs and Kubernetes inventory", `https://portal.azure.com/#resource${groupPath}/providers/Microsoft.OperationalInsights/workspaces/log-srelab/overview`]];
+      for (const [label, detail, url] of links) { const link = element("a", "resource-link"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; const text = element("span"); text.append(element("strong", "", label), element("small", "", detail)); link.append(text, icon("arrow-up-right", 17)); document.getElementById("resource-links").append(link); }
+      document.getElementById("telemetry-commands").append(codeBlock({ title: "Optional configuration and telemetry verification", code: `${scriptCommand("verify-sre-agent-configuration.ps1")}\n${scriptCommand("verify-telemetry.ps1", "-Attempts 1")}`, caption: "A failed one-attempt telemetry check may reflect ingestion delay. Inspect the output before treating the lab as ready." }));
+      document.getElementById("full-recovery").append(codeBlock({ title: "PowerShell / recover only this demo namespace", code: fullRecoveryCommands() }));
+    }
+    function buildMarkdown() {
+      const scenario = selectedScenario();
+      const impact = BROWSER_IMPACTS[scenario.browserImpact];
+      const lines = [`# SRE Demo Desk: ${scenario.title}`, "", `Scenario: ${scenario.id}`, `Scope: ${ENV.resourceGroup} / ${ENV.cluster} / pets / ${ENV.region}`, "Offline runbook. No live status or automatic command execution.", "", `Expected browser impact: ${impact.label}`, impact.description, "", scenario.mechanism, ""];
+      STAGES.forEach((stage, index) => {
+        const content = stageContent(scenario, index);
+        lines.push(`## ${index + 1}. ${stage.name}`, "", content.description, "");
+        if (content.notice) lines.push(`Caution: ${content.notice}`, "");
+        if (content.confirmation) {
+          const confirmation = content.confirmation;
+          lines.push(`### Root cause to confirm: ${confirmation.title}`, "", confirmation.cause, "", `**Confirm only when:** ${confirmation.proof}`, "", `**What the audience sees:** ${confirmation.impact}`, "");
+        }
+        if (scenario.demo && content.signals) lines.push(`### ${content.signalsTitle}`, "", ...content.signals.map(signal => `- ${signal}`), "");
+        for (const block of content.blocks) {
+          lines.push(`### ${block.title}`, "```powershell", block.code, "```", block.caption || "", "");
+          for (const target of block.links || []) lines.push(`[${target.label}](${target.url})`, "");
+        }
+        if (content.prompt) lines.push(scopedPrompt(scenario, "evidence"), "");
+        if (content.signals && !scenario.demo) lines.push(`### ${content.signalsTitle || "Evidence to capture"}`, "", ...content.signals.map(signal => `- ${signal}`), "");
+        if (content.recoveryProof) {
+          const proof = content.recoveryProof;
+          lines.push(`### ${proof.title}`, "", proof.description, "");
+          for (const block of proof.blocks) lines.push(`#### ${block.title}`, "```powershell", block.code, "```", block.caption || "", "");
+          if (proof.signals) lines.push("#### After the fix / required recovery evidence", "", ...proof.signals.map(signal => `- ${signal}`), "");
+          lines.push(`Caution: ${proof.notice}`, "");
+        }
+        if (content.recoveryPrompt) lines.push(content.recoveryPrompt, "");
+      });
+      lines.push("## Presenter notes", "", state.notes[state.scenario] || "No notes recorded.", "", "## Checkpoints (presenter-entered, not live telemetry)", ...STAGES.map((stage, index) => `- [${checkedStages()[index] ? "x" : " "}] ${stage.check}`), "", "## Reference", "https://github.com/matthansen0/azure-sre-agent-sandbox", "");
+      return lines.join("\n");
+    }
+    function buildPrintView() {
+      const scenario = selectedScenario();
+      const impact = BROWSER_IMPACTS[scenario.browserImpact];
+      const print = document.getElementById("print-runbook");
+      print.replaceChildren(element("h1", "", `SRE Demo Desk / ${scenario.title}`), element("p", "", `${scenario.id} | ${ENV.resourceGroup} | ${ENV.cluster} | pets | ${ENV.region}`), element("p", "", "Offline runbook. Check current health; checkpoints are presenter-entered. Commands below change the lab only when executed in a terminal."));
+      print.append(impactBadge(scenario.browserImpact), element("p", "", `Expected browser impact, not live status: ${impact.description}`));
+      STAGES.forEach((stage, index) => {
+        const content = stageContent(scenario, index);
+        const section = element("section");
+        section.append(element("h2", "", `${index + 1}. ${stage.name}`), element("p", "", content.description));
+        if (content.notice) section.append(element("p", "", `Caution: ${content.notice}`));
+        if (content.confirmation) section.append(failureConfirmation(content.confirmation));
+        if (scenario.demo && content.signals) section.append(element("h3", "", content.signalsTitle), evidenceList(content.signals));
+        for (const block of content.blocks) {
+          section.append(element("h3", "", block.title), element("pre", "", block.code));
+          if (block.caption) section.append(element("p", "", block.caption));
+          for (const target of block.links || []) section.append(element("p", "", `${target.label}: ${target.url}`));
+        }
+        if (content.prompt) section.append(element("p", "", scopedPrompt(scenario, "evidence")));
+        if (content.signals && !scenario.demo) section.append(element("h3", "", content.signalsTitle || "Evidence to capture"), evidenceList(content.signals));
+        if (content.recoveryProof) {
+          const proof = content.recoveryProof;
+          section.append(element("h3", "", proof.title), element("p", "", proof.description));
+          for (const block of proof.blocks) section.append(element("h3", "", block.title), element("pre", "", block.code), element("p", "", block.caption));
+          if (proof.signals) section.append(element("h3", "", "After the fix / required recovery evidence"), evidenceList(proof.signals));
+          section.append(element("p", "", `Caution: ${proof.notice}`));
+        }
+        if (content.recoveryPrompt) section.append(element("p", "", content.recoveryPrompt));
+        print.append(section);
+      });
+      if (state.notes[state.scenario]) print.append(element("h2", "", "Presenter notes"), element("p", "", state.notes[state.scenario]));
+    }
+    function updateThemeButton() {
+      const dark = document.documentElement.dataset.theme === "dark";
+      const button = document.getElementById("theme-button");
+      button.replaceChildren(icon(dark ? "sun" : "moon"));
+      button.title = dark ? "Switch to light theme" : "Switch to dark theme";
+      button.setAttribute("aria-label", button.title);
+    }
+    document.querySelectorAll("[data-icon]").forEach(holder => holder.replaceChildren(icon(holder.dataset.icon, holder.classList.contains("brand-mark") ? 26 : 16)));
+    loadState();
+    document.getElementById("agent-link").href = ENV.agentUrl;
+    document.getElementById("store-link").href = ENV.storeUrl;
+    for (const scenario of SCENARIOS) { const option = element("option", "", `${scenario.sequence} / ${scenario.title}`); option.value = scenario.id; document.getElementById("scenario-select").append(option); }
+    document.getElementById("scenario-search").addEventListener("input", renderScenarioList);
+    document.getElementById("scenario-select").addEventListener("change", event => selectScenario(event.target.value));
+    document.getElementById("current-checkpoint").addEventListener("change", event => setCheckpoint(state.stage, event.target.checked));
+    document.getElementById("presenter-notes").addEventListener("input", event => { state.notes[state.scenario] = event.target.value; saveState(); });
+    document.getElementById("previous-stage").addEventListener("click", () => selectStage(state.stage - 1));
+    document.getElementById("next-stage").addEventListener("click", () => { if (state.stage === 5) setView("catalog", true); else selectStage(state.stage + 1); });
+    document.getElementById("stage-tabs").addEventListener("keydown", event => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); const destination = event.key === "Home" ? 0 : event.key === "End" ? 5 : (state.stage + (event.key === "ArrowRight" ? 1 : 5)) % 6; selectStage(destination, true); } });
+    document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+    document.querySelector(".global-nav").addEventListener("keydown", event => { if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return; event.preventDefault(); const views = ["runbook", "catalog", "lab"]; const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? 2 : (views.indexOf(state.view) + (event.key === "ArrowRight" ? 1 : 2)) % 3; setView(views[nextIndex], true); });
+    document.getElementById("theme-button").addEventListener("click", () => { const theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = theme; try { localStorage.setItem("sre-demo-theme", theme); } catch {} updateThemeButton(); });
+    document.getElementById("focus-button").addEventListener("click", () => { const focused = document.body.classList.toggle("focus-mode"); const button = document.getElementById("focus-button"); button.setAttribute("aria-pressed", String(focused)); button.replaceChildren(icon(focused ? "minimize-2" : "maximize-2")); });
+    document.getElementById("reset-button").addEventListener("click", () => { document.getElementById("reset-description").textContent = `Clear the six local checkboxes and notes for ${selectedScenario().title}? This does not restore the application or change any Azure resource.`; document.getElementById("reset-dialog").showModal(); });
+    document.getElementById("cancel-reset").addEventListener("click", () => document.getElementById("reset-dialog").close());
+    document.getElementById("confirm-reset").addEventListener("click", () => { delete state.checks[state.scenario]; delete state.notes[state.scenario]; state.stage = 0; saveState(); renderWorkspace(); document.getElementById("reset-dialog").close(); notify("Local checkpoints and notes cleared. Lab state is unchanged."); });
+    document.getElementById("close-clipboard").addEventListener("click", () => document.getElementById("clipboard-dialog").close());
+    document.getElementById("download-button").addEventListener("click", () => { const url = URL.createObjectURL(new Blob([buildMarkdown()], { type: "text/markdown;charset=utf-8" })); const link = element("a"); link.href = url; link.download = `sre-demo-${state.scenario}.md`; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); notify("Selected runbook exported as Markdown."); });
+    document.getElementById("print-button").addEventListener("click", () => { buildPrintView(); window.print(); });
+    window.addEventListener("beforeprint", () => { buildPrintView(); printTheme = document.documentElement.dataset.theme; document.documentElement.dataset.theme = "light"; });
+    window.addEventListener("afterprint", () => { if (printTheme) document.documentElement.dataset.theme = printTheme; updateThemeButton(); });
+    renderWorkspace();
+    renderCatalog();
+    renderLab();
+    updateThemeButton();
+  </script>
+</body>
+</html>

@@ -1,15 +1,18 @@
 // =============================================================================
 // Bicep Parameters File - SRE Agent Sandbox
 // =============================================================================
-// Deploy with: az deployment sub create --location eastus2 --template-file main.bicep
+// Preview/deploy the saved Sweden Central profile with scripts/deploy.ps1.
 // =============================================================================
 
 using 'main.bicep'
 
 // Core parameters are passed by scripts/deploy.ps1 via --parameters
 
+param location = 'swedencentral'
+param resourceGroupName = 'Az-SRE-Agent-Demo-MAT-RG'
+
 // Observability stack (Grafana + Prometheus)
-param deployObservability = true
+param deployObservability = false
 
 // Baseline alert rules
 param deployAlerts = true
@@ -21,10 +24,13 @@ param deploySreAgent = true
 param deployActionGroup = true
 
 // AKS Configuration - cost-optimized for demo
-param systemNodeVmSize = 'Standard_D2s_v5'
-param userNodeVmSize = 'Standard_D2s_v5'
-param systemNodeCount = 2
-param userNodeCount = 3
+param aksSkuTier = 'Free'
+param enableNodeAutoScaling = false
+param nodeOsDiskSizeGB = 32
+param systemNodeVmSize = 'Standard_D4as_v5'
+param userNodeVmSize = 'Standard_D2as_v5'
+param systemNodeCount = 1
+param userNodeCount = 1
 
 // Tags
 param tags = {
@@ -33,4 +39,5 @@ param tags = {
   managedBy: 'bicep'
   purpose: 'demonstration'
   costCenter: 'demo-lab'
+  SecurityControl: 'Ignore'
 }
